@@ -25,6 +25,11 @@ function saveVotedId(id) {
     voted.add(id);
     localStorage.setItem('dracohub-votes', JSON.stringify([...voted]));
 }
+function removeVotedId(id) {
+    const voted = getVotedIds();
+    voted.delete(id);
+    localStorage.setItem('dracohub-votes', JSON.stringify([...voted]));
+}
 function hasVoted(id) {
     return getVotedIds().has(id);
 }
@@ -66,36 +71,42 @@ async function fetchJobs() {
 }
 
 async function upvoteJob(jobId) {
-    if (hasVoted(jobId)) return;
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const alreadyVoted = hasVoted(jobId);
 
     // Optimistic UI update
-    const job = allJobs.find(j => j.id === jobId);
-    if (job) job.upvotes = (job.upvotes || 0) + 1;
-    saveVotedId(jobId);
+    if (alreadyVoted) {
+        job.upvotes = Math.max((job.upvotes || 0) - 1, 0);
+        removeVotedId(jobId);
+    } else {
+        job.upvotes = (job.upvotes || 0) + 1;
+        saveVotedId(jobId);
+    }
     renderJobs();
     updateModalUpvoteBtn(jobId);
 
-    // Persist to Supabase via RPC-style: read current value, increment, write back
+    // Persist to Supabase
     try {
-        // Read current upvotes
         const readRes = await fetch(
             `${SUPABASE_URL}/rest/v1/raw_jobs?select=upvotes&id=eq.${jobId}`,
             { headers: supaHeaders }
         );
         const rows = await readRes.json();
         const current = (rows[0]?.upvotes || 0);
+        const newValue = alreadyVoted ? Math.max(current - 1, 0) : current + 1;
 
-        // Write incremented value
         await fetch(
             `${SUPABASE_URL}/rest/v1/raw_jobs?id=eq.${jobId}`,
             {
                 method: 'PATCH',
                 headers: supaHeaders,
-                body: JSON.stringify({ upvotes: current + 1 }),
+                body: JSON.stringify({ upvotes: newValue }),
             }
         );
     } catch (err) {
-        console.error('Upvote failed:', err);
+        console.error('Upvote toggle failed:', err);
     }
 }
 
