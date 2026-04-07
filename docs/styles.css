@@ -256,6 +256,53 @@ img {
     color: var(--text-muted);
 }
 
+/* --- Disclaimer Banner --- */
+.disclaimer {
+    background: var(--accent-tint);
+    border-bottom: 1px solid rgba(237, 136, 13, 0.15);
+    padding: 14px 0;
+    margin-top: 64px;
+}
+
+.disclaimer-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.disclaimer-inner svg {
+    flex-shrink: 0;
+    color: var(--accent);
+    margin-top: 2px;
+}
+
+.disclaimer-inner p {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    flex: 1;
+}
+
+.disclaimer-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.disclaimer-close:hover {
+    color: var(--text);
+}
+
+.disclaimer.hidden {
+    display: none;
+}
+
 /* --- Hero --- */
 .hero {
     position: relative;
@@ -552,6 +599,83 @@ img {
     padding: 10px 18px;
     flex: 1;
     text-align: center;
+}
+
+/* --- Upvote Button --- */
+.upvote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+.upvote-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-tint);
+}
+
+.upvote-btn.voted {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-tint);
+}
+
+.upvote-btn svg {
+    transition: transform 0.25s;
+}
+
+.upvote-btn:hover svg,
+.upvote-btn.voted svg {
+    transform: translateY(-1px);
+}
+
+.upvote-count {
+    font-variant-numeric: tabular-nums;
+}
+
+.job-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.job-card-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.job-card-buttons .btn {
+    font-size: 0.85rem;
+    padding: 10px 18px;
+    flex: 1;
+    text-align: center;
+}
+
+/* Modal upvote */
+.modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.modal-actions .upvote-btn {
+    padding: 10px 20px;
+    font-size: 0.875rem;
 }
 
 /* --- Skeleton Loader --- */

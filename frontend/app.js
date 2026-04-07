@@ -1,7 +1,7 @@
 /* ============================================================
    DracoHub Careers — Frontend Application
    Fetches jobs from Supabase, renders cards, handles
-   search/filter/sort, dark mode, and the detail modal.
+   search/filter/sort, upvoting, dark mode, and the detail modal.
    ============================================================ */
 
 // --- Configuration ---
@@ -13,6 +13,21 @@ const PAGE_SIZE = 12;
 let allJobs = [];
 let filteredJobs = [];
 let displayCount = PAGE_SIZE;
+
+// --- Upvote tracking (localStorage) ---
+function getVotedIds() {
+    try {
+        return new Set(JSON.parse(localStorage.getItem('dracohub-votes') || '[]'));
+    } catch { return new Set(); }
+}
+function saveVotedId(id) {
+    const voted = getVotedIds();
+    voted.add(id);
+    localStorage.setItem('dracohub-votes', JSON.stringify([...voted]));
+}
+function hasVoted(id) {
+    return getVotedIds().has(id);
+}
 
 // --- DOM refs ---
 const jobsGrid = document.getElementById('jobsGrid');
@@ -32,18 +47,56 @@ const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const mobileMenu = document.getElementById('mobileMenu');
 const statJobs = document.getElementById('statJobs');
 const statCompanies = document.getElementById('statCompanies');
+const disclaimer = document.getElementById('disclaimer');
+const disclaimerClose = document.getElementById('disclaimerClose');
 
-// --- Supabase Fetch ---
+// --- Supabase helpers ---
+const supaHeaders = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal',
+};
+
 async function fetchJobs() {
     const url = `${SUPABASE_URL}/rest/v1/raw_jobs?select=*&order=created_at.desc`;
-    const res = await fetch(url, {
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-        },
-    });
+    const res = await fetch(url, { headers: supaHeaders });
     if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
     return res.json();
+}
+
+async function upvoteJob(jobId) {
+    if (hasVoted(jobId)) return;
+
+    // Optimistic UI update
+    const job = allJobs.find(j => j.id === jobId);
+    if (job) job.upvotes = (job.upvotes || 0) + 1;
+    saveVotedId(jobId);
+    renderJobs();
+    updateModalUpvoteBtn(jobId);
+
+    // Persist to Supabase via RPC-style: read current value, increment, write back
+    try {
+        // Read current upvotes
+        const readRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/raw_jobs?select=upvotes&id=eq.${jobId}`,
+            { headers: supaHeaders }
+        );
+        const rows = await readRes.json();
+        const current = (rows[0]?.upvotes || 0);
+
+        // Write incremented value
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/raw_jobs?id=eq.${jobId}`,
+            {
+                method: 'PATCH',
+                headers: supaHeaders,
+                body: JSON.stringify({ upvotes: current + 1 }),
+            }
+        );
+    } catch (err) {
+        console.error('Upvote failed:', err);
+    }
 }
 
 // --- Init ---
@@ -54,9 +107,17 @@ async function init() {
         updateStats();
         applyFilters();
         initScrollAnimations();
+        initDisclaimer();
     } catch (err) {
         console.error('Failed to load jobs:', err);
         jobsGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Unable to load jobs. Please try again later.</p>';
+    }
+}
+
+// --- Disclaimer ---
+function initDisclaimer() {
+    if (localStorage.getItem('dracohub-disclaimer-dismissed')) {
+        disclaimer.classList.add('hidden');
     }
 }
 
@@ -72,10 +133,9 @@ function populateLocationFilter() {
     const locations = new Set();
     allJobs.forEach(job => {
         if (job.location) {
-            // Extract state/region from location string
             const parts = job.location.split(',').map(s => s.trim());
             if (parts.length >= 2) {
-                locations.add(parts[0]); // city
+                locations.add(parts[0]);
             } else if (parts[0]) {
                 locations.add(parts[0]);
             }
@@ -98,14 +158,11 @@ function applyFilters() {
     const sort = filterSort.value;
 
     filteredJobs = allJobs.filter(job => {
-        // Text search
         if (query) {
             const searchable = `${job.job_title} ${job.company} ${job.location} ${job.description}`.toLowerCase();
             if (!searchable.includes(query)) return false;
         }
-        // Source filter
         if (source && job.source !== source) return false;
-        // Location filter
         if (location && !(job.location || '').toLowerCase().includes(location)) return false;
         return true;
     });
@@ -115,12 +172,27 @@ function applyFilters() {
         filteredJobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (sort === 'oldest') {
         filteredJobs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sort === 'upvotes') {
+        filteredJobs.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
     } else if (sort === 'company') {
         filteredJobs.sort((a, b) => (a.company || '').localeCompare(b.company || ''));
     }
 
     displayCount = PAGE_SIZE;
     renderJobs();
+}
+
+// --- Upvote button HTML ---
+function upvoteBtnHtml(jobId, count, extraClass) {
+    const voted = hasVoted(jobId);
+    return `
+        <button class="upvote-btn ${voted ? 'voted' : ''} ${extraClass || ''}"
+                onclick="event.stopPropagation(); upvoteJob(${jobId})"
+                ${voted ? 'title="You upvoted this"' : 'title="Upvote this listing"'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="${voted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <span class="upvote-count">${count || 0}</span>
+        </button>
+    `;
 }
 
 function renderJobs() {
@@ -149,9 +221,12 @@ function renderJobs() {
                 ${job.date_posted ? `<span>${formatDate(job.date_posted)}</span>` : ''}
             </div>
             <p class="job-card-desc">${escapeHtml(truncate(job.description, 160))}</p>
-            <div class="job-card-footer">
-                <button class="btn btn-secondary" onclick="event.stopPropagation(); openModal(${job.id})">View Details</button>
-                ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary" onclick="event.stopPropagation()">Apply</a>` : ''}
+            <div class="job-card-actions">
+                ${upvoteBtnHtml(job.id, job.upvotes)}
+                <div class="job-card-buttons">
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); openModal(${job.id})">View Details</button>
+                    ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary" onclick="event.stopPropagation()">Apply</a>` : ''}
+                </div>
             </div>
         </div>
     `).join('');
@@ -179,11 +254,26 @@ function openModal(jobId) {
             ${job.date_posted ? `<span>Posted: ${formatDate(job.date_posted)}</span>` : ''}
         </div>
         <div class="modal-desc">${escapeHtml(job.description || 'No description available.')}</div>
-        ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary modal-apply">Apply Now</a>` : ''}
+        <div class="modal-actions" id="modalActions">
+            ${upvoteBtnHtml(job.id, job.upvotes)}
+            ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary modal-apply">Apply Now</a>` : ''}
+        </div>
     `;
 
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+}
+
+function updateModalUpvoteBtn(jobId) {
+    const actions = document.getElementById('modalActions');
+    if (!actions) return;
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    const btn = actions.querySelector('.upvote-btn');
+    if (btn) {
+        btn.classList.add('voted');
+        btn.querySelector('.upvote-count').textContent = job.upvotes || 0;
+    }
 }
 
 function closeModal() {
@@ -253,6 +343,14 @@ function formatDate(dateStr) {
     }
 }
 
+function debounce(fn, ms) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), ms);
+    };
+}
+
 // --- Event Listeners ---
 searchInput.addEventListener('input', debounce(applyFilters, 300));
 filterSource.addEventListener('change', applyFilters);
@@ -271,19 +369,15 @@ document.addEventListener('keydown', (e) => {
 });
 themeToggle.addEventListener('click', toggleTheme);
 mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+disclaimerClose.addEventListener('click', () => {
+    disclaimer.classList.add('hidden');
+    localStorage.setItem('dracohub-disclaimer-dismissed', '1');
+});
 
 // Close mobile menu on link click
 document.querySelectorAll('.mobile-menu-link').forEach(link => {
     link.addEventListener('click', () => mobileMenu.classList.remove('open'));
 });
-
-function debounce(fn, ms) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), ms);
-    };
-}
 
 // --- Boot ---
 initTheme();

@@ -70,6 +70,15 @@
         </div>
     </section>
 
+    <!-- Disclaimer -->
+    <div class="disclaimer" id="disclaimer">
+        <div class="container disclaimer-inner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p>These listings are automatically aggregated from multiple job platforms using AI-powered scrapers. While we strive for accuracy, some listings may be outdated, duplicated, or incorrectly categorised. Always verify details directly with the employer before applying. Use the upvote button to help surface the most relevant listings.</p>
+            <button class="disclaimer-close" id="disclaimerClose" aria-label="Dismiss">&times;</button>
+        </div>
+    </div>
+
     <!-- Jobs Section -->
     <section class="section section-alt" id="jobs">
         <div class="container">
@@ -87,8 +96,12 @@
                     <select id="filterSource" class="filter-select">
                         <option value="">All Sources</option>
                         <option value="linkedin">LinkedIn</option>
-                        <option value="myjobmag">MyJobMag</option>
+                        <option value="indeed">Indeed</option>
                         <option value="jobberman">Jobberman</option>
+                        <option value="myjobmag">MyJobMag</option>
+                        <option value="hotnigerianjobs">HotNigerianJobs</option>
+                        <option value="ngcareers">NgCareers</option>
+                        <option value="company_career_page">Company Pages</option>
                     </select>
                     <select id="filterLocation" class="filter-select">
                         <option value="">All Locations</option>
@@ -96,6 +109,7 @@
                     <select id="filterSort" class="filter-select">
                         <option value="newest">Newest First</option>
                         <option value="oldest">Oldest First</option>
+                        <option value="upvotes">Most Upvoted</option>
                         <option value="company">By Company</option>
                     </select>
                 </div>
