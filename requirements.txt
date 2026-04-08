@@ -1,4 +1,5 @@
 apify-client==1.8.1
+apify-shared==1.5.0
 supabase==2.13.0
 python-dotenv==1.1.0
 schedule==1.2.2
