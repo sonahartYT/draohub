@@ -25,9 +25,20 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Verify secrets are set
+        run: |
+          if [ -z "$APIFY_API_KEY" ]; then echo "ERROR: APIFY_API_KEY secret not set" && exit 1; fi
+          if [ -z "$SUPABASE_URL" ]; then echo "ERROR: SUPABASE_URL secret not set" && exit 1; fi
+          if [ -z "$SUPABASE_KEY" ]; then echo "ERROR: SUPABASE_KEY secret not set" && exit 1; fi
+          echo "All secrets are configured."
+        env:
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
       - name: Run scraper pipeline
         env:
           APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python -m src.main
+        run: python -c "from src.main import run_pipeline; run_pipeline()"
