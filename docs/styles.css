@@ -527,6 +527,120 @@ img {
     transform: translateY(-4px);
 }
 
+/* --- Share Trigger & Dropdown on Job Cards --- */
+.job-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.share-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.share-trigger:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-tint);
+}
+
+[data-theme="dark"] .share-trigger {
+    background: #1C2128;
+    border-color: #2D333B;
+}
+
+[data-theme="dark"] .share-trigger:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(237, 136, 13, 0.1);
+}
+
+.share-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    min-width: 180px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    animation: dropdownIn 0.18s ease;
+}
+
+[data-theme="dark"] .share-dropdown {
+    background: #1C2128;
+    border-color: #2D333B;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.share-dropdown.open {
+    display: block;
+}
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.share-dropdown-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    padding: 4px 10px 8px;
+}
+
+.share-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+}
+
+.share-dropdown-item:hover {
+    background: var(--navy-tint);
+}
+
+[data-theme="dark"] .share-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.share-dropdown-item.whatsapp svg { color: #25D366; }
+.share-dropdown-item.linkedin svg { color: #0A66C2; }
+.share-dropdown-item.twitter svg { color: var(--text); }
+.share-dropdown-item.copy svg { color: var(--text-muted); }
+.share-dropdown-item.copied .copy-label { color: var(--accent); }
+
 .job-card-header {
     margin-bottom: 12px;
 }
@@ -655,7 +769,6 @@ img {
 .job-card-buttons {
     display: flex;
     gap: 8px;
-    flex: 1;
 }
 
 .job-card-buttons .btn {
@@ -676,6 +789,395 @@ img {
 .modal-actions .upvote-btn {
     padding: 10px 20px;
     font-size: 0.875rem;
+}
+
+/* --- Share Buttons --- */
+.share-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s;
+    padding: 0;
+}
+
+.share-btn:hover {
+    border-color: transparent;
+    transform: translateY(-1px);
+}
+
+.share-btn.whatsapp:hover {
+    background: #25D366;
+    color: #fff;
+}
+
+.share-btn.linkedin:hover {
+    background: #0A66C2;
+    color: #fff;
+}
+
+.share-btn.twitter:hover {
+    background: #1DA1F2;
+    color: #fff;
+}
+
+.share-btn.copy-link:hover {
+    background: var(--navy);
+    color: #fff;
+}
+
+[data-theme="dark"] .share-btn {
+    background: #1C2128;
+    border-color: #2D333B;
+}
+
+.share-btn .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.share-btn.copied .tooltip {
+    display: block;
+    animation: fadeOut 1.5s forwards;
+}
+
+@keyframes fadeOut {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Modal share row */
+.modal-share {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.modal-share .share-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.modal-share .share-btn {
+    width: 38px;
+    height: 38px;
+}
+
+/* --- Share Nudge --- */
+.share-nudge {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-dark);
+    color: #fff;
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    max-width: 340px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    z-index: 1500;
+    animation: slideUp 0.4s ease;
+}
+
+.share-nudge.visible {
+    display: block;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.share-nudge-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.share-nudge-text strong {
+    color: var(--accent);
+}
+
+.share-nudge-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.share-nudge-actions .btn {
+    font-size: 0.82rem;
+    padding: 10px 16px;
+}
+
+.share-nudge-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+}
+
+.share-nudge-close:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Saved Collection Bar --- */
+.collection-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-dark);
+    color: #fff;
+    padding: 14px 24px;
+    z-index: 1500;
+    animation: slideUp 0.3s ease;
+}
+
+.collection-bar.visible {
+    display: block;
+}
+
+.collection-bar-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.collection-bar-info {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.collection-bar-info strong {
+    color: var(--accent);
+}
+
+.collection-bar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.collection-bar-actions .btn {
+    font-size: 0.82rem;
+    padding: 8px 16px;
+}
+
+/* Bookmark/save button on cards */
+.save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.save-btn:hover,
+.save-btn.saved {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-tint);
+}
+
+[data-theme="dark"] .save-btn {
+    background: #1C2128;
+    border-color: #2D333B;
+}
+
+/* --- Weekly Stats Banner --- */
+.weekly-stats {
+    background: var(--bg-dark);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.weekly-stats-text {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.weekly-stats-text strong {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.weekly-stats-share {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weekly-stats-share .share-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* --- Hot Jobs Card --- */
+.hot-jobs-card {
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-top: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hot-jobs-card .subscribe-decor-1 {
+    width: 200px;
+    height: 200px;
+    top: -60px;
+    right: -40px;
+}
+
+.hot-jobs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.hot-jobs-title {
+    font-family: var(--font-primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.hot-jobs-title span {
+    color: var(--accent);
+}
+
+.hot-jobs-list {
+    list-style: none;
+}
+
+.hot-jobs-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 12px;
+}
+
+.hot-jobs-list li:last-child {
+    border-bottom: none;
+}
+
+.hot-job-rank {
+    font-family: var(--font-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 24px;
+}
+
+.hot-job-info {
+    flex: 1;
+}
+
+.hot-job-info-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.hot-job-info-company {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.hot-job-votes {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.hot-jobs-share {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hot-jobs-share .share-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+@media (max-width: 768px) {
+    .share-nudge {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: none;
+    }
+    .weekly-stats {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .collection-bar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 /* --- Skeleton Loader --- */
