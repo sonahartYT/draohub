@@ -115,6 +115,15 @@
                 </div>
             </div>
 
+            <!-- Weekly Stats Banner -->
+            <div class="weekly-stats" id="weeklyStats" style="display:none;">
+                <p class="weekly-stats-text" id="weeklyStatsText"></p>
+                <div class="weekly-stats-share">
+                    <span class="share-label">Share</span>
+                    <div class="share-row" id="weeklyShareBtns"></div>
+                </div>
+            </div>
+
             <!-- Results count -->
             <p class="results-count" id="resultsCount"></p>
 
@@ -134,6 +143,20 @@
             <!-- Empty state -->
             <div class="empty-state" id="emptyState" style="display:none;">
                 <p>No jobs match your search. Try broadening your filters.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hot Jobs Section -->
+    <section class="section" id="hotJobsSection" style="padding-top:0;">
+        <div class="container">
+            <div class="hot-jobs-card" id="hotJobsCard" style="display:none;">
+                <div class="subscribe-decor-1"></div>
+                <div class="hot-jobs-header">
+                    <h3 class="hot-jobs-title">This Week's <span>Hot Jobs</span></h3>
+                </div>
+                <ol class="hot-jobs-list" id="hotJobsList"></ol>
+                <div class="hot-jobs-share" id="hotJobsShare"></div>
             </div>
         </div>
     </section>
@@ -223,6 +246,30 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Share Nudge (appears after 3 job views) -->
+    <div class="share-nudge" id="shareNudge">
+        <button class="share-nudge-close" id="shareNudgeClose">&times;</button>
+        <p class="share-nudge-text">Know someone in <strong>oil &amp; gas</strong> looking for work? Share DracoHub with them.</p>
+        <div class="share-nudge-actions">
+            <a id="nudgeWhatsApp" target="_blank" rel="noopener" class="btn btn-primary" style="background:#25D366;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.628-1.475A11.932 11.932 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75c-2.17 0-4.207-.578-5.963-1.585l-.427-.254-2.746.876.88-2.688-.278-.44A9.71 9.71 0 012.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75z"/></svg>
+                Share on WhatsApp
+            </a>
+            <button id="nudgeCopyLink" class="btn btn-secondary" style="color:#fff;background:rgba(255,255,255,0.12);">Copy Link</button>
+        </div>
+    </div>
+
+    <!-- Collection Bar (appears when jobs are saved) -->
+    <div class="collection-bar" id="collectionBar">
+        <div class="collection-bar-inner">
+            <span class="collection-bar-info"><strong id="collectionCount">0</strong> jobs saved</span>
+            <div class="collection-bar-actions">
+                <button class="btn btn-primary" id="shareCollection" style="font-size:0.82rem;padding:8px 16px;">Share Collection</button>
+                <button class="btn btn-secondary" id="clearCollection" style="color:#fff;background:rgba(255,255,255,0.1);font-size:0.82rem;padding:8px 16px;">Clear</button>
+            </div>
         </div>
     </div>
 
