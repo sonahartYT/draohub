@@ -31,8 +31,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger("dracohub.scraper")
 
-SERPER_ENDPOINT = "https://google.serper.dev/jobs"
+SERPER_ENDPOINT = "https://google.serper.dev/search"
 REQUEST_TIMEOUT = 30  # seconds
+
+# Domains we recognise as job platforms — used to infer source from URL
+_DOMAIN_TO_SOURCE = {
+    "linkedin.com":     "linkedin",
+    "indeed.com":       "indeed",
+    "jobberman.com":    "jobberman",
+    "myjobmag.com":     "myjobmag",
+    "glassdoor.com":    "glassdoor",
+    "hotnigerianjobs.com": "hotnigerianjobs",
+    "ngcareers.com":    "ngcareers",
+    "careers.nnpcgroup.com": "nnpc",
+    "shell.com":        "shell",
+    "totalenergies.com":"totalenergies",
+    "careers.chevron.com": "chevron",
+    "jobs.exxonmobil.com": "exxonmobil",
+    "seplatenergy.com": "seplat",
+    "oandoplc.com":     "oando",
+    "sahara-group.com": "sahara",
+    "myworkdayjobs.com":"workday",
+    "ziprecruiter.com": "ziprecruiter",
+    "jobgurus.com.ng":  "jobgurus",
+    "naijahotjobs.com": "naijahotjobs",
+}
 
 
 # ============================================================
@@ -49,42 +72,65 @@ def _clean(value: Any) -> Any:
     return value
 
 
+def _source_from_url(url: str) -> str:
+    """Infer source platform from a URL domain."""
+    if not url:
+        return "google_jobs"
+    url_lower = url.lower()
+    for domain, source in _DOMAIN_TO_SOURCE.items():
+        if domain in url_lower:
+            return source
+    return "google_jobs"
+
+
+def _clean_title(raw_title: str) -> str:
+    """
+    Google organic titles for job results often look like:
+      "Drilling Engineer at Shell Nigeria | LinkedIn"
+      "HSE Manager - Lagos - Jobberman"
+      "Production Engineer - NNPC | Indeed.com"
+    Strip the trailing platform badge (everything after the last | or last -Platform).
+    """
+    if not raw_title:
+        return raw_title
+    # Strip " | Platform" suffix
+    if " | " in raw_title:
+        raw_title = raw_title.rsplit(" | ", 1)[0].strip()
+    # Strip trailing " - Platform" only if the part after the dash looks like
+    # a platform name (no spaces, or known platform name)
+    if " - " in raw_title:
+        parts = raw_title.rsplit(" - ", 1)
+        suffix = parts[1].strip()
+        # Remove if suffix is a single word (platform name) with no spaces
+        # or is a known platform — but keep if it's a location like "Port Harcourt"
+        known_platforms = {
+            "linkedin", "indeed", "jobberman", "myjobmag", "glassdoor",
+            "ziprecruiter", "monster", "careerjet",
+        }
+        if suffix.lower() in known_platforms or (len(suffix.split()) == 1 and len(suffix) < 20):
+            raw_title = parts[0].strip()
+    return raw_title
+
+
 def normalise_job(raw: dict) -> dict:
     """
-    Convert a Serper.dev Google Jobs result into our raw_jobs schema.
-    Missing fields are set to None (we do NOT drop the row for nulls).
+    Convert a Serper.dev /search organic result into our raw_jobs schema.
+    Serper organic result fields: title, link, snippet, sitelinks, position.
+    Missing fields are set to None — rows are never dropped for missing fields.
     """
-    # detected_extensions is Serper's bag of structured metadata:
-    # {"posted_at": "2 days ago", "schedule_type": "Full-time", "salary": "...",
-    #  "work_from_home": true, ...}
-    ext = raw.get("detected_extensions") or {}
-
-    # Apply link: prefer apply_link; fall back to first related_link
-    apply_url = _clean(raw.get("apply_link"))
-    if not apply_url:
-        related = raw.get("related_links") or []
-        if isinstance(related, list) and related:
-            first = related[0]
-            if isinstance(first, dict):
-                apply_url = _clean(first.get("link"))
-
-    # "via" is Serper's source-platform field, e.g. "LinkedIn", "Indeed",
-    # "Glassdoor", "via Jobberman". Strip the leading "via " if present.
-    source = _clean(raw.get("via"))
-    if source and source.lower().startswith("via "):
-        source = source[4:].strip()
-    if not source:
-        source = "google_jobs"  # safe fallback so NOT NULL constraint is satisfied
+    apply_url = _clean(raw.get("link"))
+    source = _source_from_url(apply_url or "")
+    job_title = _clean_title(_clean(raw.get("title")) or "")
 
     return {
-        "job_title": _clean(raw.get("title")),
-        "company": _clean(raw.get("company_name")),
-        "location": _clean(raw.get("location")),
-        "date_posted": _clean(ext.get("posted_at")),
-        "description": _clean(raw.get("description")),
+        "job_title": job_title if job_title else None,
+        "company":   None,           # not available from organic results
+        "location":  None,           # not available from organic results
+        "date_posted": _clean(raw.get("date")),   # Serper sometimes includes date
+        "description": _clean(raw.get("snippet")),
         "apply_url": apply_url,
-        "source": source,
-        "detected_extensions": ext if ext else None,
+        "source":    source,
+        "detected_extensions": None,
     }
 
 
@@ -94,13 +140,14 @@ def normalise_job(raw: dict) -> dict:
 
 def fetch_serper_page(query: str, page: int) -> list[dict]:
     """
-    POST to Serper.dev /jobs for one query and one page of results.
-    Returns the raw jobs list. Raises requests.HTTPError on non-2xx.
+    POST to Serper.dev /search for one query and page.
+    Returns the organic results list. Raises requests.HTTPError on non-2xx.
     """
     payload = {
         "q": query,
         "gl": "ng",   # Nigeria
         "hl": "en",
+        "num": 10,    # results per page
         "page": page,
     }
     headers = {
@@ -115,7 +162,7 @@ def fetch_serper_page(query: str, page: int) -> list[dict]:
     )
     response.raise_for_status()
     data = response.json()
-    return data.get("jobs", []) or []
+    return data.get("organic", []) or []
 
 
 def scrape_query(query: str) -> list[dict]:

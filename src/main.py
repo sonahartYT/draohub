@@ -2,7 +2,7 @@
 """
 DracoHub Careers — unified pipeline orchestrator.
 
-Daily run  (--daily):   Serper.dev Google Jobs + Indeed + Jobberman + MyJobMag
+Daily run  (--daily):   Indeed + Jobberman + MyJobMag
 Weekly run (--weekly):  Company career pages only
 
 Usage:
@@ -13,10 +13,8 @@ Usage:
 
 import argparse
 import logging
-import time
 
-from src.config import SERPER_API_KEY
-from src.database.client import get_client, insert_jobs
+from src.database.client import get_client, insert_jobs  # noqa: F401 (insert_jobs used in _insert_and_log)
 from src.utils.daily_log import ScrapeLog
 from src.scrapers import indeed_scraper, jobberman_scraper, myjobmag_scraper, company_pages_scraper
 
@@ -25,47 +23,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("dracohub.main")
-
-
-# ---------------------------------------------------------------------------
-# Serper.dev wrapper
-# ---------------------------------------------------------------------------
-
-def _scrape_serper() -> tuple[list[dict], list[str]]:
-    """
-    Run all SEARCH_QUERIES through Serper.dev.
-    Returns (all_jobs, failed_queries).
-
-    Jobs are already normalised with 'source' set to the "via" platform
-    per job (e.g. LinkedIn, Glassdoor) — not overridden by insert_jobs.
-    """
-    import requests as _req
-    from scraper import scrape_query, SEARCH_QUERIES, REQUEST_DELAY_SECONDS
-
-    if not SERPER_API_KEY:
-        logger.warning("SERPER_API_KEY not set — skipping Serper.dev")
-        return [], []
-
-    all_jobs: list[dict] = []
-    failed: list[str] = []
-
-    for i, query in enumerate(SEARCH_QUERIES, 1):
-        logger.info("serper [%d/%d]: %s", i, len(SEARCH_QUERIES), query)
-        try:
-            jobs = scrape_query(query)
-            logger.info("serper [%d/%d]: %d results", i, len(SEARCH_QUERIES), len(jobs))
-            all_jobs.extend(jobs)
-        except _req.HTTPError as exc:
-            logger.error("serper [%d/%d] HTTP error: %s", i, len(SEARCH_QUERIES), exc)
-            failed.append(query)
-        except Exception as exc:
-            logger.error("serper [%d/%d] error: %s", i, len(SEARCH_QUERIES), exc)
-            failed.append(query)
-
-        if i < len(SEARCH_QUERIES):
-            time.sleep(REQUEST_DELAY_SECONDS)
-
-    return all_jobs, failed
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +83,7 @@ def _insert_and_log(
 def run_daily(dry_run: bool = False) -> None:
     logger.info("=" * 60)
     logger.info("DracoHub Careers — DAILY pipeline")
-    logger.info("Sources: Serper.dev, Indeed, Jobberman, MyJobMag")
+    logger.info("Sources: Indeed, Jobberman, MyJobMag")
     if dry_run:
         logger.info("DRY RUN — no database writes")
     logger.info("=" * 60)
@@ -134,23 +91,18 @@ def run_daily(dry_run: bool = False) -> None:
     db = None if dry_run else get_client()
     log = ScrapeLog()
 
-    # 1. Serper.dev Google Jobs (source set per-job from "via" field)
-    logger.info("\n[1/4] Serper.dev Google Jobs")
-    jobs, failed, error = _run_scraper("serper", _scrape_serper)
-    _insert_and_log(db, log, "serper", jobs, failed, error, source=None, dry_run=dry_run)
-
-    # 2. Indeed via python-jobspy
-    logger.info("\n[2/4] Indeed (python-jobspy)")
+    # 1. Indeed via python-jobspy
+    logger.info("\n[1/3] Indeed (python-jobspy)")
     jobs, failed, error = _run_scraper("indeed", indeed_scraper.run)
     _insert_and_log(db, log, "indeed", jobs, failed, error, source="indeed", dry_run=dry_run)
 
-    # 3. Jobberman
-    logger.info("\n[3/4] Jobberman")
+    # 2. Jobberman
+    logger.info("\n[2/3] Jobberman")
     jobs, failed, error = _run_scraper("jobberman", jobberman_scraper.run)
     _insert_and_log(db, log, "jobberman", jobs, failed, error, source="jobberman", dry_run=dry_run)
 
-    # 4. MyJobMag
-    logger.info("\n[4/4] MyJobMag")
+    # 3. MyJobMag
+    logger.info("\n[3/3] MyJobMag")
     jobs, failed, error = _run_scraper("myjobmag", myjobmag_scraper.run)
     _insert_and_log(db, log, "myjobmag", jobs, failed, error, source="myjobmag", dry_run=dry_run)
 
