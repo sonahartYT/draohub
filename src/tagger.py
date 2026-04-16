@@ -254,27 +254,166 @@ def _rule_based_tagger(job: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Claude API tagger (stub — swap in when ready)
+# Claude API tagger
 # ---------------------------------------------------------------------------
+
+_CLAUDE_SYSTEM_PROMPT = """You are classifying Nigerian oil & gas job listings into structured tags.
+
+Given a job title and company name, return ONLY a valid JSON object — no explanation, no markdown.
+
+TAXONOMY (use exactly these values):
+
+category (pick the ONE primary function of the role):
+  Engineering | HSE | Operations | Finance | IT/Digital | Legal/Contracts |
+  Management | HR | Project Management | Other
+
+discipline (O&G sub-speciality — null if not clearly a technical/engineering role):
+  Drilling | Reservoir | Production | Subsurface | Facilities |
+  Marine/Offshore | Geoscience | Instrumentation | Chemical/Process |
+  Project Management | null
+
+seniority:
+  Graduate/Entry | Mid-Level | Senior | Manager | Executive
+
+employment_type:
+  Full-time | Contract | Internship
+
+skills: array of up to 5 specific O&G tools, certifications, or technical skills
+  clearly implied by the title (e.g. ["HSSE", "SAP", "NEBOSH", "Petrel", "IWCF"])
+  Use [] if nothing specific is implied.
+
+RULES:
+- Base classification ONLY on the job title. Ignore company name unless the title is ambiguous.
+- category = the PRIMARY job function, not keywords in a description.
+  e.g. "Facilities Engineer" → Engineering (not HSE even if safety is involved)
+  e.g. "SAP Consultant" → IT/Digital
+  e.g. "Contracts Administrator" → Legal/Contracts
+  e.g. "Business Development Manager" → Management or Operations (not HSE)
+  e.g. "Sustainability Analyst" → HSE only if clearly environmental/safety focused
+- discipline = null for non-engineering roles (Finance, HR, IT, Legal, Management, HSE)
+- seniority clues: "Graduate/Trainee/Intern/NYSC/Entry" → Graduate/Entry,
+  "Senior/Lead/Principal/Specialist" → Senior,
+  "Manager/Head/Superintendent/Team Lead" → Manager,
+  "Director/VP/Chief/GM/MD" → Executive,
+  everything else → Mid-Level
+- employment_type: "Contract/Contractor/Temporary" → Contract,
+  "Intern/Industrial Training/NYSC" → Internship, else Full-time
+
+Output format (strict JSON, no other text):
+{"category":"...","discipline":null,"seniority":"...","employment_type":"...","skills":[]}"""
+
+_VALID_CATEGORIES = {
+    "Engineering", "HSE", "Operations", "Finance", "IT/Digital",
+    "Legal/Contracts", "Management", "HR", "Project Management", "Other"
+}
+_VALID_DISCIPLINES = {
+    "Drilling", "Reservoir", "Production", "Subsurface", "Facilities",
+    "Marine/Offshore", "Geoscience", "Instrumentation", "Chemical/Process",
+    "Project Management", None
+}
+_VALID_SENIORITIES = {"Graduate/Entry", "Mid-Level", "Senior", "Manager", "Executive"}
+_VALID_EMPLOYMENT = {"Full-time", "Contract", "Internship"}
+
+
+def _validate_claude_response(data: dict) -> dict:
+    """Ensure Claude's response has valid values; fall back to safe defaults."""
+    return {
+        "category":        data.get("category") if data.get("category") in _VALID_CATEGORIES else "Other",
+        "discipline":      data.get("discipline") if data.get("discipline") in _VALID_DISCIPLINES else None,
+        "seniority":       data.get("seniority") if data.get("seniority") in _VALID_SENIORITIES else "Mid-Level",
+        "employment_type": data.get("employment_type") if data.get("employment_type") in _VALID_EMPLOYMENT else "Full-time",
+        "skills":          [s for s in (data.get("skills") or []) if isinstance(s, str)][:5],
+        "tagger":          "claude",
+    }
+
 
 def _claude_tagger(job: dict) -> dict:
     """
-    Call Claude API to tag a job. Drop-in replacement for _rule_based_tagger.
-
-    TODO when implementing:
-    1. pip install anthropic
-    2. Set ANTHROPIC_API_KEY in .env
-    3. Build a tight system prompt with the taxonomy above
-    4. Request JSON output (use claude-3-haiku — cheapest, fast)
-    5. Validate response shape before returning
-    6. Fall back to _rule_based_tagger() on any error
-
-    Estimated cost: ~$0.001 per job → ~$1/month at current volume.
+    Tag one job using Claude 3 Haiku. Falls back to rule-based on any error.
+    Cost: ~$0.000087 per job (~$0.13/month at current volume).
     """
-    raise NotImplementedError(
-        "Claude tagger not yet implemented. "
-        "Set TAGGER_BACKEND=rule-based or implement _claude_tagger()."
+    import anthropic
+    import json as _json
+
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    if not anthropic_key:
+        raise RuntimeError("ANTHROPIC_API_KEY not set — cannot use Claude tagger")
+
+    title   = (job.get("job_title") or job.get("title") or "").strip()
+    company = (job.get("company") or "").strip()
+
+    if not title:
+        return _rule_based_tagger(job)
+
+    client = anthropic.Anthropic(api_key=anthropic_key)
+    user_msg = f'Title: "{title}"\nCompany: "{company}"'
+
+    msg = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=150,
+        system=_CLAUDE_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_msg}],
     )
+
+    raw = msg.content[0].text.strip()
+
+    # Strip markdown code fences if Claude adds them
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    raw = raw.strip()
+
+    data = _json.loads(raw)
+    return _validate_claude_response(data)
+
+
+def tag_jobs_batch_claude(jobs: list[dict]) -> list[dict]:
+    """
+    Tag multiple jobs in a single Claude API call (10 per call).
+    Used by batch_tag.py for efficiency. Returns list of tags dicts.
+    Falls back to one-by-one on parse error.
+    """
+    import anthropic
+    import json as _json
+
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    if not anthropic_key:
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
+
+    client = anthropic.Anthropic(api_key=anthropic_key)
+
+    lines = []
+    for i, job in enumerate(jobs, 1):
+        title   = (job.get("job_title") or job.get("title") or "").strip()
+        company = (job.get("company") or "").strip()
+        lines.append(f'{i}. Title: "{title}" | Company: "{company}"')
+
+    user_msg = (
+        "Classify each job. Return a JSON array with one object per job, "
+        "in the same order. Each object must follow the taxonomy exactly.\n\n"
+        + "\n".join(lines)
+    )
+
+    msg = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=150 * len(jobs),
+        system=_CLAUDE_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+
+    raw = msg.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    raw = raw.strip()
+
+    results = _json.loads(raw)
+    if not isinstance(results, list) or len(results) != len(jobs):
+        raise ValueError(f"Expected {len(jobs)} results, got {len(results) if isinstance(results, list) else type(results)}")
+
+    return [_validate_claude_response(r) for r in results]
 
 
 # ---------------------------------------------------------------------------
@@ -285,7 +424,7 @@ def tag_job(job: dict) -> dict:
     """
     Tag a single job dict. Returns a tags dict. Never raises.
 
-    Switch between backends by setting TAGGER_BACKEND env var:
+    Switch backends via TAGGER_BACKEND env var:
         TAGGER_BACKEND=rule-based  (default)
         TAGGER_BACKEND=claude
     """
@@ -293,15 +432,19 @@ def tag_job(job: dict) -> dict:
         if TAGGER_BACKEND == "claude":
             return _claude_tagger(job)
         return _rule_based_tagger(job)
-    except NotImplementedError:
-        raise
     except Exception as exc:
         logger.error("tag_job failed for %r: %s", job.get("job_title"), exc)
-        return {
-            "category":        "Other",
-            "discipline":      None,
-            "seniority":       "Mid-Level",
-            "employment_type": "Full-time",
-            "skills":          [],
-            "tagger":          "rule-based",
-        }
+        # Always fall back to rule-based — never drop a job
+        try:
+            tags = _rule_based_tagger(job)
+            tags["tagger"] = "rule-based-fallback"
+            return tags
+        except Exception:
+            return {
+                "category":        "Other",
+                "discipline":      None,
+                "seniority":       "Mid-Level",
+                "employment_type": "Full-time",
+                "skills":          [],
+                "tagger":          "fallback",
+            }

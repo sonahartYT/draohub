@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
-from src.tagger import tag_job  # noqa: E402
+from src.tagger import tag_job, tag_jobs_batch_claude  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("batch_tag")
@@ -103,10 +103,18 @@ def main():
     parser = argparse.ArgumentParser(description="Batch-tag raw_jobs")
     parser.add_argument("--all", action="store_true", help="Re-tag all rows, not just untagged")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, no DB writes")
+    parser.add_argument("--backend", choices=["rule-based", "claude"], default=None,
+                        help="Override TAGGER_BACKEND env var for this run")
     args = parser.parse_args()
+
+    if args.backend:
+        os.environ["TAGGER_BACKEND"] = args.backend
+
+    backend = os.getenv("TAGGER_BACKEND", "rule-based")
 
     logger.info("=" * 55)
     logger.info("DracoHub — Batch Job Tagger")
+    logger.info("Backend: %s", backend)
     if args.dry_run:
         logger.info("DRY RUN — no writes")
     if args.all:
@@ -122,14 +130,33 @@ def main():
         logger.info("Nothing to do.")
         return
 
-    # Tag all rows
+    # Tag all rows — use batch Claude calls if backend is claude (10 per API call)
     updates = []
     category_counts: dict[str, int] = {}
-    for job in jobs:
-        tags = tag_job(job)
-        updates.append({"id": job["id"], "tags": tags})
-        cat = tags.get("category", "Other")
-        category_counts[cat] = category_counts.get(cat, 0) + 1
+    BATCH_SIZE = 10
+
+    if backend == "claude":
+        logger.info("Using Claude batch mode (%d jobs per API call)...", BATCH_SIZE)
+        for i in range(0, len(jobs), BATCH_SIZE):
+            batch = jobs[i: i + BATCH_SIZE]
+            try:
+                tags_list = tag_jobs_batch_claude(batch)
+            except Exception as exc:
+                logger.warning("Batch %d-%d failed (%s), falling back to one-by-one", i, i+BATCH_SIZE, exc)
+                tags_list = [tag_job(job) for job in batch]
+
+            for job, tags in zip(batch, tags_list):
+                updates.append({"id": job["id"], "tags": tags})
+                cat = tags.get("category", "Other")
+                category_counts[cat] = category_counts.get(cat, 0) + 1
+
+            logger.info("Tagged %d/%d...", min(i + BATCH_SIZE, len(jobs)), len(jobs))
+    else:
+        for job in jobs:
+            tags = tag_job(job)
+            updates.append({"id": job["id"], "tags": tags})
+            cat = tags.get("category", "Other")
+            category_counts[cat] = category_counts.get(cat, 0) + 1
 
     # Preview
     logger.info("\nTagging preview:")

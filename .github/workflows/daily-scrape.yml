@@ -27,20 +27,21 @@ jobs:
 
       - name: Verify secrets are set
         run: |
-          if [ -z "$SERPER_API_KEY" ]; then echo "ERROR: SERPER_API_KEY secret not set" && exit 1; fi
           if [ -z "$SUPABASE_URL" ]; then echo "ERROR: SUPABASE_URL secret not set" && exit 1; fi
           if [ -z "$SUPABASE_KEY" ]; then echo "ERROR: SUPABASE_KEY secret not set" && exit 1; fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "ERROR: ANTHROPIC_API_KEY secret not set" && exit 1; fi
           echo "All secrets are configured."
         env:
-          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Run daily scrape pipeline
         env:
-          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TAGGER_BACKEND: claude
         run: python -m src.main --daily
 
       - name: Upload daily log as artifact
