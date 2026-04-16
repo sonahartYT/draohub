@@ -1,16 +1,16 @@
-name: Daily Job Scrape
+name: Weekly Company Pages Scrape
 
 on:
   schedule:
-    # Runs at 7:00 AM UTC every day (8:00 AM WAT)
-    - cron: '0 7 * * *'
+    # Runs at 6:00 AM UTC every Monday (7:00 AM WAT)
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     # Allows manual trigger from the GitHub Actions tab
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -27,27 +27,24 @@ jobs:
 
       - name: Verify secrets are set
         run: |
-          if [ -z "$SERPER_API_KEY" ]; then echo "ERROR: SERPER_API_KEY secret not set" && exit 1; fi
           if [ -z "$SUPABASE_URL" ]; then echo "ERROR: SUPABASE_URL secret not set" && exit 1; fi
           if [ -z "$SUPABASE_KEY" ]; then echo "ERROR: SUPABASE_KEY secret not set" && exit 1; fi
           echo "All secrets are configured."
         env:
-          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-      - name: Run daily scrape pipeline
+      - name: Run weekly company pages scrape
         env:
-          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python -m src.main --daily
+        run: python -m src.main --weekly
 
-      - name: Upload daily log as artifact
+      - name: Upload weekly log as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: scrape-log-${{ github.run_id }}
+          name: weekly-scrape-log-${{ github.run_id }}
           path: logs/
           retention-days: 30
           if-no-files-found: ignore

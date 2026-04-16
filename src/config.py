@@ -9,83 +9,60 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- API Keys ---
-APIFY_API_KEY = os.getenv("APIFY_API_KEY")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# --- Structured Search Queries ---
-# Organized by domain so we can prioritise or weight categories later.
-SEARCH_QUERIES = {
-    "supply_chain": [
-        "supply chain oil and gas Nigeria",
-        "procurement upstream Nigeria",
-        "logistics oil and gas Nigeria",
-        "materials management upstream",
-        "vendor management oil and gas",
-        "inventory control upstream Nigeria",
-    ],
-    "engineering": [
-        "upstream engineer Nigeria",
-        "drilling engineer Nigeria",
-        "production engineer oil and gas Nigeria",
-        "reservoir engineer Nigeria",
-        "facilities engineer upstream",
-        "subsurface engineer Nigeria",
-    ],
-    "finance": [
-        "oil and gas finance Nigeria",
-        "upstream commercial analyst",
-        "energy analyst Nigeria",
-        "petroleum economist Nigeria",
-        "oil and gas project finance",
-    ],
-    "project_management": [
-        "project manager oil and gas Nigeria",
-        "project engineer upstream Nigeria",
-        "PMC oil and gas Nigeria",
-    ],
-    "hse": [
-        "HSE officer oil and gas Nigeria",
-        "safety engineer upstream Nigeria",
-        "QHSE oil and gas Nigeria",
-    ],
-    "general": [
-        "upstream oil and gas Nigeria",
-        "petroleum industry Nigeria",
-        "IOC jobs Nigeria",
-        "NOC jobs Nigeria",
-        "oil field jobs Nigeria",
-    ],
-}
-
-
-def get_all_queries() -> list[str]:
-    """Flatten all query groups into a single list."""
-    return [q for group in SEARCH_QUERIES.values() for q in group]
-
-
-# --- Company Career Pages ---
-# Major Nigerian upstream operators whose career pages we scrape directly.
-COMPANY_CAREER_URLS = {
-    "NNPC": "https://careers.nnpcgroup.com/jobs",
-    "Shell Nigeria": "https://www.shell.com.ng/careers/experienced-professionals.html",
-    "TotalEnergies Nigeria": "https://careers.totalenergies.com/en/search-results?keywords=&location=Nigeria",
-    "Chevron Nigeria": "https://careers.chevron.com/search-jobs/Nigeria",
-    "ExxonMobil Nigeria": "https://jobs.exxonmobil.com/search/?q=&locationsearch=Nigeria",
-    "Seplat Energy": "https://seplatenergy.com/people-culture/current-opportunities/",
-    "Oando": "https://www.oandoplc.com/careers/",
-    "Sahara Group": "https://www.sahara-group.com/careers",
-}
-
-# --- Apify Actor IDs ---
-APIFY_ACTORS = {
-    "linkedin": "curious_coder/linkedin-jobs-scraper",
-    "indeed": "misceres/indeed-scraper",
-    "web_scraper": "apify/web-scraper",
-}
+# --- Serper.dev Google Jobs Search Queries ---
+# 30 structured queries covering all O&G role categories in Nigeria.
+# Each is passed verbatim to the Serper.dev /jobs endpoint.
+SEARCH_QUERIES = [
+    # Supply chain and procurement
+    "supply chain procurement oil and gas Nigeria",
+    "logistics materials management upstream Nigeria",
+    "vendor management contracts oil and gas Nigeria",
+    # Engineering and technical
+    "drilling reservoir production engineer Nigeria",
+    "facilities subsurface engineer upstream Nigeria",
+    "geoscience geophysics petroleum engineer Nigeria",
+    "instrumentation automation control oil and gas Nigeria",
+    # Finance and commercial
+    "oil and gas finance commercial analyst Nigeria",
+    "petroleum economics project finance upstream Nigeria",
+    "trading commodity analyst energy Nigeria",
+    # Project management and contracts
+    "project manager engineer oil and gas Nigeria",
+    "contracts administrator legal counsel upstream Nigeria",
+    # HSE and sustainability
+    "HSE QHSE safety officer oil and gas Nigeria",
+    "community relations sustainability environment oil and gas Nigeria",
+    # HR and people
+    "HR human resources talent management oil and gas Nigeria",
+    "learning development organisational development upstream Nigeria",
+    # IT and digital
+    "IT digital SAP data analytics oil and gas Nigeria",
+    "technology systems engineer upstream Nigeria",
+    # Marine and offshore
+    "marine offshore operations engineer Nigeria",
+    # Graduate and early career
+    "oil and gas graduate trainee programme Nigeria",
+    "upstream internship entry level petroleum Nigeria",
+    "graduate engineer analyst oil and gas Nigeria",
+    # IOCs and major operators
+    "NNPC TotalEnergies Shell Chevron ExxonMobil Dangote Nigeria careers",
+    "Seplat Oando Sahara Heirs Energies Aradel Nigeria jobs",
+    # Indigenous operators
+    "Eroton Neconde Aiteo Renaissance Midwestern Nigeria oil gas jobs",
+    "NPDC Belemaoil Platform Petroleum Famfa Pan Ocean Nigeria careers",
+    # Service companies
+    "SLB Halliburton Baker Hughes Saipem Weatherford Nigeria jobs",
+    "Bell Oil Gas Dakotelin Sinopec NAOC NLNG Nigeria careers",
+    # Location specific
+    "oil and gas jobs Port Harcourt Rivers State Nigeria",
+    "oil and gas jobs Lagos Victoria Island Nigeria",
+]
 
 # --- Scraper Settings ---
-SCRAPE_HOUR_UTC = 7
-REQUEST_DELAY_SECONDS = 3       # Delay between source requests to avoid rate limiting
-MAX_ITEMS_PER_QUERY = 25        # Max results per query per source
+REQUEST_DELAY_SECONDS = 2       # Delay between Serper queries (rate-limit respect)
+MAX_PAGES_PER_QUERY = 3         # Pagination depth per query
 LOG_DIR = "logs"                # Directory for daily scrape logs
