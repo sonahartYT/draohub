@@ -21,6 +21,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
+from src.tagger import tag_job
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -121,6 +122,10 @@ def _build_row(raw: dict, source: str) -> dict | None:
         row["detected_extensions"] = raw["detected_extensions"]
 
     row["data_quality_score"] = compute_quality_score(row)
+
+    # Auto-tag with O&G taxonomy (rule-based by default, swappable to Claude)
+    row["tags"] = tag_job(row)
+
     return row
 
 

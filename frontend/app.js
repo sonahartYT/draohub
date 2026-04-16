@@ -53,6 +53,8 @@ function isSaved(id) { return getSavedIds().has(id); }
 const jobsGrid = document.getElementById('jobsGrid');
 const searchInput = document.getElementById('searchInput');
 const filterSource = document.getElementById('filterSource');
+const filterCategory = document.getElementById('filterCategory');
+const filterSeniority = document.getElementById('filterSeniority');
 const filterLocation = document.getElementById('filterLocation');
 const filterSort = document.getElementById('filterSort');
 const resultsCount = document.getElementById('resultsCount');
@@ -357,7 +359,9 @@ function populateLocationFilter() {
 // ============================================================
 function applyFilters() {
     const query = searchInput.value.toLowerCase().trim();
-    const source = filterSource.value;
+    const source = filterSource ? filterSource.value : '';
+    const category = filterCategory ? filterCategory.value : '';
+    const seniority = filterSeniority ? filterSeniority.value : '';
     const location = filterLocation.value.toLowerCase();
     const sort = filterSort.value;
 
@@ -367,6 +371,8 @@ function applyFilters() {
             if (!s.includes(query)) return false;
         }
         if (source && job.source !== source) return false;
+        if (category && job.tags?.category !== category) return false;
+        if (seniority && job.tags?.seniority !== seniority) return false;
         if (location && !(job.location || '').toLowerCase().includes(location)) return false;
         return true;
     });
@@ -410,6 +416,11 @@ function renderJobs() {
                 ${job.location ? `<span>${escapeHtml(job.location)}</span>` : ''}
                 ${job.date_posted ? `<span>${formatDate(job.date_posted)}</span>` : ''}
             </div>
+            ${job.tags ? `<div class="job-tags">
+                ${job.tags.category ? `<span class="job-tag tag-category">${escapeHtml(job.tags.category)}</span>` : ''}
+                ${job.tags.discipline ? `<span class="job-tag tag-discipline">${escapeHtml(job.tags.discipline)}</span>` : ''}
+                ${job.tags.seniority && job.tags.seniority !== 'Mid-Level' ? `<span class="job-tag tag-seniority">${escapeHtml(job.tags.seniority)}</span>` : ''}
+            </div>` : ''}
             <p class="job-card-desc">${escapeHtml(truncate(job.description, 160))}</p>
             <div class="job-card-actions">
                 <div style="display:flex;gap:6px;align-items:center;">
@@ -450,6 +461,13 @@ function openModal(jobId) {
             ${job.location ? `<span>${escapeHtml(job.location)}</span>` : ''}
             ${job.date_posted ? `<span>Posted: ${formatDate(job.date_posted)}</span>` : ''}
         </div>
+        ${job.tags ? `<div class="job-tags modal-tags">
+            ${job.tags.category ? `<span class="job-tag tag-category">${escapeHtml(job.tags.category)}</span>` : ''}
+            ${job.tags.discipline ? `<span class="job-tag tag-discipline">${escapeHtml(job.tags.discipline)}</span>` : ''}
+            ${job.tags.seniority ? `<span class="job-tag tag-seniority">${escapeHtml(job.tags.seniority)}</span>` : ''}
+            ${job.tags.employment_type && job.tags.employment_type !== 'Full-time' ? `<span class="job-tag tag-employment">${escapeHtml(job.tags.employment_type)}</span>` : ''}
+            ${(job.tags.skills || []).slice(0, 4).map(s => `<span class="job-tag tag-skill">${escapeHtml(s)}</span>`).join('')}
+        </div>` : ''}
         <div class="modal-desc">${escapeHtml(job.description || 'No description available.')}</div>
         <div class="modal-actions" id="modalActions">
             ${upvoteBtnHtml(job.id, job.upvotes)}
@@ -562,7 +580,9 @@ function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTi
 // EVENT LISTENERS
 // ============================================================
 searchInput.addEventListener('input', debounce(applyFilters, 300));
-filterSource.addEventListener('change', applyFilters);
+filterSource && filterSource.addEventListener('change', applyFilters);
+filterCategory && filterCategory.addEventListener('change', applyFilters);
+filterSeniority && filterSeniority.addEventListener('change', applyFilters);
 filterLocation.addEventListener('change', applyFilters);
 filterSort.addEventListener('change', applyFilters);
 loadMoreBtn.addEventListener('click', () => { displayCount += PAGE_SIZE; renderJobs(); });
