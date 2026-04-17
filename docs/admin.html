@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DracoHub · Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1923;
+    --bg2: #162231;
+    --bg3: #1d2d42;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8edf3;
+    --muted: #7a8fa8;
+    --accent: #ED880D;
+    --green: #22c55e;
+    --blue: #6366f1;
+    --teal: #14b8a6;
+    --rose: #f43f5e;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* ── Login ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  .login-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 48px 40px;
+    width: 100%; max-width: 380px; text-align: center;
+  }
+  .login-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .login-logo span { color: var(--accent); }
+  .login-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+  .login-input {
+    width: 100%; padding: 13px 16px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 1rem; margin-bottom: 12px;
+  }
+  .login-input:focus { outline: none; border-color: var(--accent); }
+  .login-btn {
+    width: 100%; padding: 13px; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius-sm); font-size: 1rem;
+    font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+  }
+  .login-btn:hover { opacity: 0.9; }
+  .login-error { color: var(--rose); font-size: 0.85rem; margin-top: 10px; display: none; }
+
+  /* ── Dashboard ── */
+  #dashboard { display: none; }
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 16px 32px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-logo { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+  .topbar-logo span { color: var(--accent); }
+  .topbar-badge {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent);
+    background: rgba(237,136,13,0.12); padding: 3px 10px;
+    border-radius: 20px; margin-left: 10px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .last-updated { font-size: 0.8rem; color: var(--muted); }
+  .logout-btn {
+    font-size: 0.82rem; color: var(--muted); background: none;
+    border: 1px solid var(--border); padding: 6px 14px;
+    border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;
+  }
+  .logout-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .main { padding: 32px; max-width: 1280px; margin: 0 auto; }
+
+  /* ── Stat cards ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .stat-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px; }
+  .stat-value { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .stat-sub { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  .stat-delta { font-weight: 600; }
+  .stat-delta.up { color: var(--green); }
+  .stat-delta.neutral { color: var(--muted); }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 28px;
+  }
+  .chart-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .chart-card.wide { grid-column: span 2; }
+  .chart-title {
+    font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); margin-bottom: 20px;
+  }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* ── Subscribers table ── */
+  .table-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 28px;
+  }
+  .table-header {
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .table-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 12px 20px; text-align: left; font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+    border-bottom: 1px solid var(--border); }
+  td { padding: 14px 20px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 600;
+    padding: 2px 9px; border-radius: 20px;
+  }
+  .badge-eng { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .badge-hse { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .badge-ops { background: rgba(234,179,8,0.15); color: #fde047; }
+  .badge-fin { background: rgba(34,197,94,0.15); color: #86efac; }
+  .badge-it  { background: rgba(20,184,166,0.15); color: #5eead4; }
+  .badge-mgmt{ background: rgba(168,85,247,0.15); color: #d8b4fe; }
+  .badge-def { background: rgba(255,255,255,0.08); color: var(--muted); }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 120px; color: var(--muted); font-size: 0.9rem;
+    flex-direction: column; gap: 12px;
+  }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-card.wide { grid-column: span 1; }
+    .main { padding: 16px; }
+    .topbar { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Draco<span>Hub</span>.</div>
+    <p class="login-sub">Admin Dashboard</p>
+    <input type="password" id="pwInput" class="login-input" placeholder="Password" autocomplete="current-password">
+    <button class="login-btn" onclick="tryLogin()">Enter</button>
+    <p class="login-error" id="loginError">Incorrect password</p>
+  </div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;">
+      <span class="topbar-logo">Draco<span>Hub</span>.</span>
+      <span class="topbar-badge">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="last-updated" id="lastUpdated">Loading…</span>
+      <button class="logout-btn" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Jobs</div>
+        <div class="stat-value" id="statTotalJobs">—</div>
+        <div class="stat-sub"><span class="stat-delta up" id="statJobsWeek">—</span> added this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Companies</div>
+        <div class="stat-value" id="statCompanies">—</div>
+        <div class="stat-sub">unique employers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Subscribers</div>
+        <div class="stat-value" id="statTotalSubs">—</div>
+        <div class="stat-sub"><span class="stat-delta up" id="statSubsWeek">—</span> this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Subscribers This Month</div>
+        <div class="stat-value" id="statSubsMonth">—</div>
+        <div class="stat-sub">since <span id="statMonthName">—</span></div>
+      </div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Jobs by Category</div>
+        <div class="chart-wrap"><canvas id="chartJobsCat"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Jobs by Source</div>
+        <div class="chart-wrap"><canvas id="chartJobsSrc"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Subscribers by Category</div>
+        <div class="chart-wrap"><canvas id="chartSubsCat"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Subscribers by Location</div>
+        <div class="chart-wrap"><canvas id="chartSubsLoc"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Recent subscribers -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">Recent Subscribers</span>
+        <span class="last-updated" id="subCount">—</span>
+      </div>
+      <div id="subsTableWrap">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+
+// ── Simple password gate ──
+// Change this password by updating the value below
+const ADMIN_PASSWORD = 'dracohub2026';
+
+const headers = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
+
+function tryLogin() {
+  const val = document.getElementById('pwInput').value;
+  if (val === ADMIN_PASSWORD) {
+    sessionStorage.setItem('dh-admin', '1');
+    showDashboard();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+document.getElementById('pwInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+function logout() {
+  sessionStorage.removeItem('dh-admin');
+  location.reload();
+}
+
+function showDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadDashboard();
+}
+
+if (sessionStorage.getItem('dh-admin')) showDashboard();
+
+// ── Helpers ──
+const CHART_COLORS = [
+  '#6366f1','#14b8a6','#f59e0b','#22c55e',
+  '#f43f5e','#a855f7','#3b82f6','#ec4899','#84cc16','#06b6d4'
+];
+
+function donutChart(id, labels, data) {
+  const ctx = document.getElementById(id).getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: CHART_COLORS, borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#7a8fa8', font: { size: 11 }, padding: 14, boxWidth: 12 }
+        }
+      },
+      maintainAspectRatio: false,
+    }
+  });
+}
+
+function barChart(id, labels, data) {
+  const ctx = document.getElementById(id).getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: CHART_COLORS,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7a8fa8', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#e8edf3', font: { size: 11 } } }
+      },
+      maintainAspectRatio: false,
+    }
+  });
+}
+
+function counter(arr, key) {
+  const c = {};
+  arr.forEach(r => { const v = r[key] || 'Unknown'; c[v] = (c[v] || 0) + 1; });
+  return Object.entries(c).sort((a, b) => b[1] - a[1]);
+}
+
+function daysAgo(n) {
+  const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString();
+}
+
+function badgeClass(cat) {
+  const m = { 'Engineering':'eng','HSE':'hse','Operations':'ops','Finance':'fin','IT/Digital':'it','Management':'mgmt' };
+  return 'badge badge-' + (m[cat] || 'def');
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ── Load everything ──
+async function loadDashboard() {
+  try {
+    const [jobsRes, subsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/raw_jobs?select=id,company,source,created_at,tags`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/subscribers?select=*&order=created_at.desc`, { headers }),
+    ]);
+    const jobs = await jobsRes.json();
+    const subs = await subsRes.json();
+
+    const weekAgo  = daysAgo(7);
+    const monthAgo = daysAgo(30);
+
+    // ── Stats ──
+    const jobsThisWeek = jobs.filter(j => j.created_at > weekAgo).length;
+    const companies    = new Set(jobs.map(j => j.company).filter(Boolean)).size;
+    const subsThisWeek  = subs.filter(s => s.created_at > weekAgo).length;
+    const subsThisMonth = subs.filter(s => s.created_at > monthAgo).length;
+
+    document.getElementById('statTotalJobs').textContent   = jobs.length.toLocaleString();
+    document.getElementById('statJobsWeek').textContent    = `+${jobsThisWeek}`;
+    document.getElementById('statCompanies').textContent   = companies.toLocaleString();
+    document.getElementById('statTotalSubs').textContent   = subs.length.toLocaleString();
+    document.getElementById('statSubsWeek').textContent    = `+${subsThisWeek}`;
+    document.getElementById('statSubsMonth').textContent   = subsThisMonth.toLocaleString();
+    document.getElementById('statMonthName').textContent   =
+      new Date(monthAgo).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    document.getElementById('subCount').textContent        = `${subs.length} total`;
+    document.getElementById('lastUpdated').textContent     =
+      'Updated ' + new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+
+    // ── Jobs by category ──
+    const jobCats = counter(jobs.map(j => ({ category: j.tags?.category || 'Other' })), 'category');
+    donutChart('chartJobsCat', jobCats.map(e=>e[0]), jobCats.map(e=>e[1]));
+
+    // ── Jobs by source ──
+    const jobSrcs = counter(jobs, 'source');
+    barChart('chartJobsSrc', jobSrcs.map(e=>e[0]), jobSrcs.map(e=>e[1]));
+
+    // ── Subscribers by category ──
+    const subCats = counter(subs.map(s => ({ category: s.category || 'Not specified' })), 'category');
+    if (subCats.length > 0) {
+      donutChart('chartSubsCat', subCats.map(e=>e[0]), subCats.map(e=>e[1]));
+    } else {
+      document.getElementById('chartSubsCat').parentElement.innerHTML =
+        '<div class="loading" style="height:100%">No subscribers yet</div>';
+    }
+
+    // ── Subscribers by location ──
+    const subLocs = counter(subs.map(s => ({ loc: s.location_pref || 'Not specified' })), 'loc');
+    if (subLocs.length > 0) {
+      donutChart('chartSubsLoc', subLocs.map(e=>e[0]), subLocs.map(e=>e[1]));
+    } else {
+      document.getElementById('chartSubsLoc').parentElement.innerHTML =
+        '<div class="loading" style="height:100%">No subscribers yet</div>';
+    }
+
+    // ── Recent subscribers table ──
+    const recent = subs.slice(0, 20);
+    if (recent.length === 0) {
+      document.getElementById('subsTableWrap').innerHTML =
+        '<div class="loading" style="height:100px">No subscribers yet — share the site!</div>';
+    } else {
+      document.getElementById('subsTableWrap').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Category</th>
+              <th>Seniority</th>
+              <th>Location</th>
+              <th>Signed up</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recent.map(s => `
+              <tr>
+                <td>${s.name || '—'}</td>
+                <td style="color:var(--muted)">${s.email}</td>
+                <td>${s.category ? `<span class="${badgeClass(s.category)}">${s.category}</span>` : '—'}</td>
+                <td>${s.seniority || '—'}</td>
+                <td>${s.location_pref || '—'}</td>
+                <td style="color:var(--muted)">${fmtDate(s.created_at)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+    }
+
+  } catch(err) {
+    console.error('Dashboard error:', err);
+  }
+}
+</script>
+</body>
+</html>
