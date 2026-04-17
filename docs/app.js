@@ -254,9 +254,12 @@ function upvoteBtnHtml(jobId, count, extra) {
 async function flagJob(jobId) {
     if (hasFlagged(jobId)) return;
     saveFlaggedId(jobId);
-    // Close modal if open for this job
-    if (modalOverlay.classList.contains('open')) closeModal();
-    applyFilters();
+    // Update button to show it was recorded, without hiding the listing
+    document.querySelectorAll(`.flag-btn[data-job-id="${jobId}"]`).forEach(btn => {
+        btn.textContent = 'Reported';
+        btn.disabled = true;
+        btn.classList.add('flag-reported');
+    });
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_flag_count`, {
             method: 'POST',
@@ -267,8 +270,8 @@ async function flagJob(jobId) {
 }
 
 function flagBtnHtml(jobId) {
-    if (hasFlagged(jobId)) return '';
-    return `<button class="flag-btn" onclick="event.stopPropagation(); flagJob(${jobId})" title="Mark this listing as closed">Closed?</button>`;
+    const reported = hasFlagged(jobId);
+    return `<button class="flag-btn ${reported ? 'flag-reported' : ''}" data-job-id="${jobId}" onclick="event.stopPropagation(); flagJob(${jobId})" title="Mark this listing as closed" ${reported ? 'disabled' : ''}>${reported ? 'Reported' : 'Closed?'}</button>`;
 }
 
 function toggleShowStale() {
@@ -414,7 +417,6 @@ function applyFilters() {
 
     // First pass: apply all filters except date
     const candidates = allJobs.filter(job => {
-        if (hasFlagged(job.id)) return false;
         if ((job.flag_count || 0) >= 3) return false;
         if (query) {
             const s = `${job.job_title} ${job.company} ${job.location} ${job.description}`.toLowerCase();

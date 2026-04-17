@@ -1064,6 +1064,10 @@ img {
     color: #e05252;
     background: rgba(224, 82, 82, 0.08);
 }
+.flag-btn.flag-reported {
+    opacity: 0.45;
+    cursor: default;
+}
 
 /* --- Stale notice --- */
 .stale-notice {
