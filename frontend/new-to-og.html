@@ -178,6 +178,23 @@
   .bg-search:focus { outline: none; border-color: var(--accent); }
   .bg-search::placeholder { color: var(--muted); }
 
+  /* ── Awareness callout ── */
+  .awareness-block {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: var(--bg2); border: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 24px;
+    margin-top: 40px;
+  }
+  .awareness-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+  .awareness-block strong {
+    display: block; font-size: 1rem; font-weight: 800;
+    color: var(--text); margin-bottom: 10px; letter-spacing: -0.01em;
+  }
+  .awareness-block p {
+    font-size: 0.92rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .awareness-block p:last-child { margin-bottom: 0; }
+
   /* ── CTA ── */
   .cta-block {
     background: linear-gradient(135deg, #1a2635 0%, #162231 100%);
@@ -407,6 +424,16 @@
       <div><strong>Don't ignore smaller operators.</strong> Mid-sized Nigerian independents (Eroton, Neconde, First E&P, Waltersmith) hire constantly and offer faster career progression than the majors.</div>
     </li>
   </ul>
+
+  <!-- Awareness callout -->
+  <div class="awareness-block">
+    <div class="awareness-icon">💡</div>
+    <div>
+      <strong>The single most important thing you can do right now:</strong>
+      <p>Be aware of opportunities and be ready for them when they come. Most people miss their best career breaks not because they weren't qualified — but because they weren't watching. The O&G job market moves fast. Roles open and close within days. A great opportunity going to someone else simply because they saw it first is entirely avoidable.</p>
+      <p>Set up your job alerts below and we'll make sure you never miss a role that matches your profile again.</p>
+    </div>
+  </div>
 
   <!-- CTA -->
   <div class="cta-block">
