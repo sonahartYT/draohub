@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" id="htmlRoot">
+<html lang="en" data-theme="light" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,14 +98,21 @@
 
   /* ── Theme toggle ── */
   .theme-btn {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 38px; height: 38px; border-radius: 50%;
     background: var(--bg3); border: 1px solid var(--border);
-    color: var(--muted); cursor: pointer; display: flex;
+    color: var(--text); cursor: pointer; display: flex;
     align-items: center; justify-content: center;
     transition: all 0.2s; flex-shrink: 0;
   }
-  .theme-btn:hover { color: var(--text); border-color: var(--muted); background: var(--bg2); }
-  .theme-btn svg { width: 17px; height: 17px; }
+  .theme-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--bg2); }
+  .theme-btn svg { width: 18px; height: 18px; }
+
+  @media (max-width: 900px) {
+    .last-updated { display: none; }
+    .theme-btn { width: 42px; height: 42px; }
+    .theme-btn svg { width: 20px; height: 20px; }
+    .logout-btn { padding: 8px 12px; }
+  }
 
   .main { padding: 32px; max-width: 1280px; margin: 0 auto; }
 
@@ -164,13 +171,13 @@
     display: inline-block; font-size: 0.72rem; font-weight: 600;
     padding: 2px 9px; border-radius: 20px;
   }
-  .badge-eng { background: rgba(99,102,241,0.15); color: #a5b4fc; }
-  .badge-hse { background: rgba(239,68,68,0.15); color: #fca5a5; }
-  .badge-ops { background: rgba(234,179,8,0.15); color: #fde047; }
-  .badge-fin { background: rgba(34,197,94,0.15); color: #86efac; }
-  .badge-it  { background: rgba(20,184,166,0.15); color: #5eead4; }
-  .badge-mgmt{ background: rgba(168,85,247,0.15); color: #d8b4fe; }
-  .badge-def { background: rgba(255,255,255,0.08); color: var(--muted); }
+  .badge-eng { background: rgba(99,102,241,0.12); color: #4f46e5; }
+  .badge-hse { background: rgba(239,68,68,0.12);  color: #dc2626; }
+  .badge-ops { background: rgba(234,179,8,0.15);  color: #b45309; }
+  .badge-fin { background: rgba(34,197,94,0.12);  color: #15803d; }
+  .badge-it  { background: rgba(20,184,166,0.12); color: #0d9488; }
+  .badge-mgmt{ background: rgba(168,85,247,0.12); color: #7c3aed; }
+  .badge-def { background: var(--bg3); color: var(--muted); }
 
   /* ── Loading ── */
   .loading {
@@ -321,8 +328,8 @@ function toggleTheme() {
   if (_dashData) renderCharts(_dashData.jobs, _dashData.subs);
 }
 
-// Apply saved theme immediately (before paint)
-applyTheme(localStorage.getItem('dh-theme') || 'dark');
+// Apply saved theme immediately (before paint) — default is light
+applyTheme(localStorage.getItem('dh-theme') || 'light');
 
 // ── Login ──
 function tryLogin() {
