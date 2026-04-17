@@ -540,8 +540,8 @@ function clearCollection() {
 // ============================================================
 function initTheme() {
     const stored = localStorage.getItem('dracohub-theme');
+    // Default is light; only switch if user has explicitly toggled before
     if (stored) document.documentElement.setAttribute('data-theme', stored);
-    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.setAttribute('data-theme', 'dark');
 }
 
 function toggleTheme() {
