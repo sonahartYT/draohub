@@ -256,6 +256,20 @@
       </div>
     </div>
 
+    <!-- Today's jobs summary -->
+    <div class="table-card" style="margin-bottom:28px;">
+      <div class="table-header">
+        <div>
+          <span class="table-title">Today's Scrape</span>
+          <span class="last-updated" style="margin-left:12px;" id="todayDate">—</span>
+        </div>
+        <span class="last-updated" id="todayCount">—</span>
+      </div>
+      <div id="todayWrap">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
+
     <!-- Charts row 1 -->
     <div class="charts-grid">
       <div class="chart-card">
@@ -490,6 +504,54 @@ async function loadDashboard() {
 
     const weekAgo  = daysAgo(7);
     const monthAgo = daysAgo(30);
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayISO = todayStart.toISOString();
+
+    // ── Today's jobs ──
+    const todayJobs = jobs.filter(j => j.created_at >= todayISO);
+    document.getElementById('todayDate').textContent =
+      new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+    document.getElementById('todayCount').textContent = `${todayJobs.length} new job${todayJobs.length !== 1 ? 's' : ''}`;
+
+    if (todayJobs.length === 0) {
+      document.getElementById('todayWrap').innerHTML =
+        '<div class="loading" style="height:80px">No jobs scraped yet today — scraper runs at 7am UTC.</div>';
+    } else {
+      // Group by source
+      const bySource = {};
+      todayJobs.forEach(j => {
+        const s = j.source || 'unknown';
+        bySource[s] = (bySource[s] || 0) + 1;
+      });
+      const sourcePills = Object.entries(bySource)
+        .sort((a,b) => b[1]-a[1])
+        .map(([s,n]) => `<span class="badge badge-def">${s} <strong>${n}</strong></span>`)
+        .join(' ');
+
+      document.getElementById('todayWrap').innerHTML = `
+        <div style="padding:16px 24px 12px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--border);">
+          ${sourcePills}
+        </div>
+        <table>
+          <thead>
+            <tr><th>Job Title</th><th>Company</th><th>Category</th><th>Seniority</th><th>Source</th></tr>
+          </thead>
+          <tbody>
+            ${todayJobs.slice(0, 50).map(j => {
+              const tags = j.tags || {};
+              return `<tr>
+                <td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${j.job_title || '—'}</td>
+                <td style="color:var(--muted)">${j.company || '—'}</td>
+                <td>${tags.category ? `<span class="${badgeClass(tags.category)}">${tags.category}</span>` : '—'}</td>
+                <td style="color:var(--muted);font-size:0.82rem">${tags.seniority || '—'}</td>
+                <td style="color:var(--muted);font-size:0.82rem">${j.source || '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        ${todayJobs.length > 50 ? `<div style="padding:12px 24px;color:var(--muted);font-size:0.82rem">Showing 50 of ${todayJobs.length} jobs added today.</div>` : ''}
+      `;
+    }
 
     // ── Stats ──
     const jobsThisWeek  = jobs.filter(j => j.created_at > weekAgo).length;
