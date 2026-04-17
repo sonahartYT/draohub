@@ -16,6 +16,8 @@ let allJobs = [];
 let filteredJobs = [];
 let displayCount = PAGE_SIZE;
 let modalViewCount = 0; // tracks job detail views for nudge
+let showStale = false;  // whether to show listings older than 30 days
+let staleCount = 0;     // count of listings hidden by date filter
 
 // ============================================================
 // LOCALSTORAGE HELPERS
@@ -33,6 +35,16 @@ function removeVotedId(id) {
     localStorage.setItem('dracohub-votes', JSON.stringify([...v]));
 }
 function hasVoted(id) { return getVotedIds().has(id); }
+
+function getFlaggedIds() {
+    try { return new Set(JSON.parse(localStorage.getItem('dracohub-flagged') || '[]')); }
+    catch { return new Set(); }
+}
+function saveFlaggedId(id) {
+    const f = getFlaggedIds(); f.add(id);
+    localStorage.setItem('dracohub-flagged', JSON.stringify([...f]));
+}
+function hasFlagged(id) { return getFlaggedIds().has(id); }
 
 function getSavedIds() {
     try { return new Set(JSON.parse(localStorage.getItem('dracohub-saved') || '[]')); }
@@ -236,6 +248,34 @@ function upvoteBtnHtml(jobId, count, extra) {
         </button>`;
 }
 
+// ============================================================
+// FLAG AS CLOSED
+// ============================================================
+async function flagJob(jobId) {
+    if (hasFlagged(jobId)) return;
+    saveFlaggedId(jobId);
+    // Close modal if open for this job
+    if (modalOverlay.classList.contains('open')) closeModal();
+    applyFilters();
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_flag_count`, {
+            method: 'POST',
+            headers: { ...supaHeaders, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ job_id: jobId }),
+        });
+    } catch (e) { console.error('Flag failed:', e); }
+}
+
+function flagBtnHtml(jobId) {
+    if (hasFlagged(jobId)) return '';
+    return `<button class="flag-btn" onclick="event.stopPropagation(); flagJob(${jobId})" title="Mark this listing as closed">Closed?</button>`;
+}
+
+function toggleShowStale() {
+    showStale = !showStale;
+    applyFilters();
+}
+
 function updateModalUpvoteBtn(jobId) {
     const a = document.getElementById('modalActions');
     if (!a) return;
@@ -370,8 +410,12 @@ function applyFilters() {
     const seniority = filterSeniority ? filterSeniority.value : '';
     const location = filterLocation.value.toLowerCase();
     const sort = filterSort.value;
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    filteredJobs = allJobs.filter(job => {
+    // First pass: apply all filters except date
+    const candidates = allJobs.filter(job => {
+        if (hasFlagged(job.id)) return false;
+        if ((job.flag_count || 0) >= 3) return false;
         if (query) {
             const s = `${job.job_title} ${job.company} ${job.location} ${job.description}`.toLowerCase();
             if (!s.includes(query)) return false;
@@ -382,6 +426,12 @@ function applyFilters() {
         if (location && !(job.location || '').toLowerCase().includes(location)) return false;
         return true;
     });
+
+    // Count how many would be hidden by the 30-day filter
+    staleCount = candidates.filter(j => new Date(j.created_at) < thirtyDaysAgo).length;
+
+    // Second pass: apply date filter unless user opted in
+    filteredJobs = showStale ? candidates : candidates.filter(j => new Date(j.created_at) >= thirtyDaysAgo);
 
     if (sort === 'newest') filteredJobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     else if (sort === 'oldest') filteredJobs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -403,6 +453,22 @@ function renderJobs() {
     }
     emptyState.style.display = 'none';
     resultsCount.textContent = `Showing ${visible.length} of ${filteredJobs.length} jobs`;
+
+    // Stale notice
+    let staleNotice = document.getElementById('staleNotice');
+    if (!staleNotice) {
+        staleNotice = document.createElement('p');
+        staleNotice.id = 'staleNotice';
+        staleNotice.className = 'stale-notice';
+        resultsCount.parentNode.insertBefore(staleNotice, resultsCount.nextSibling);
+    }
+    if (staleCount > 0 && !showStale) {
+        staleNotice.innerHTML = `${staleCount} older listing${staleCount !== 1 ? 's' : ''} hidden (30+ days) · <button class="stale-toggle" onclick="toggleShowStale()">Show all</button>`;
+    } else if (showStale && staleCount > 0) {
+        staleNotice.innerHTML = `Showing all listings including older ones · <button class="stale-toggle" onclick="toggleShowStale()">Hide older</button>`;
+    } else {
+        staleNotice.innerHTML = '';
+    }
 
     jobsGrid.innerHTML = visible.map((job, i) => `
         <div class="job-card fade-in" onclick="openModal(${job.id})" style="animation-delay:${Math.min(i * 0.05, 0.3)}s">
@@ -436,6 +502,7 @@ function renderJobs() {
                     </button>
                 </div>
                 <div class="job-card-buttons">
+                    ${flagBtnHtml(job.id)}
                     ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary" onclick="event.stopPropagation()">Apply</a>` : ''}
                 </div>
             </div>
@@ -481,6 +548,7 @@ function openModal(jobId) {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="${isSaved(job.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
             </button>
             ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary modal-apply">Apply Now</a>` : ''}
+            ${flagBtnHtml(job.id)}
         </div>
         <div class="modal-share">
             <span class="share-label">Share</span>

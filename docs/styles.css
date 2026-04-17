@@ -1048,6 +1048,41 @@ img {
     border-color: #2D333B;
 }
 
+/* --- Flag as Closed --- */
+.flag-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.flag-btn:hover {
+    color: #e05252;
+    background: rgba(224, 82, 82, 0.08);
+}
+
+/* --- Stale notice --- */
+.stale-notice {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: -14px;
+    margin-bottom: 16px;
+}
+.stale-toggle {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+.stale-toggle:hover { opacity: 0.8; }
+
 /* --- Weekly Stats Banner --- */
 .weekly-stats {
     background: var(--bg-dark);
