@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New to Oil & Gas? — DracoHub Careers</title>
+<meta name="description" content="A practical guide to breaking into the Oil & Gas industry in Nigeria — what roles exist, which backgrounds qualify, and how to get started.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RW46C4GGWS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-RW46C4GGWS');
+</script>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --bg2: #ffffff;
+    --bg3: #e8ecf2;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a2635;
+    --muted: #64748b;
+    --accent: #ED880D;
+    --accent-tint: rgba(237,136,13,0.08);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --max: 760px;
+  }
+  [data-theme="dark"] {
+    --bg: #0f1923;
+    --bg2: #162231;
+    --bg3: #1d2d42;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8edf3;
+    --muted: #7a8fa8;
+    --accent-tint: rgba(237,136,13,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.7; }
+
+  /* ── Nav ── */
+  .nav {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 60px;
+  }
+  .nav-logo { font-weight: 800; font-size: 1.1rem; text-decoration: none; color: var(--text); }
+  .nav-logo span { color: var(--accent); }
+  .nav-back {
+    font-size: 0.85rem; color: var(--muted); text-decoration: none;
+    display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--text); }
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .theme-btn {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-btn svg { width: 17px; height: 17px; }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 56px 24px 48px;
+  }
+  .hero-inner { max-width: var(--max); margin: 0 auto; }
+  .hero-tag {
+    display: inline-block; font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent); background: var(--accent-tint);
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 560px; }
+
+  /* ── Main content ── */
+  .content { max-width: var(--max); margin: 0 auto; padding: 48px 24px 80px; }
+
+  .intro-box {
+    background: var(--accent-tint); border: 1px solid rgba(237,136,13,0.2);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+    font-size: 0.95rem; color: var(--text); line-height: 1.65;
+  }
+  .intro-box strong { color: var(--accent); }
+
+  h2 {
+    font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 16px; margin-top: 48px; color: var(--text);
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  p { color: var(--muted); margin-bottom: 16px; font-size: 0.97rem; }
+
+  /* ── Role cards ── */
+  .roles-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 16px;
+  }
+  @media (max-width: 560px) { .roles-grid { grid-template-columns: 1fr; } }
+
+  .role-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  .role-card-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .role-name { font-weight: 700; font-size: 0.95rem; }
+  .role-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin: 0; }
+
+  /* ── Background match table ── */
+  .match-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    margin-bottom: 16px; font-size: 0.88rem;
+  }
+  .match-table th {
+    background: var(--bg3); padding: 12px 16px; text-align: left;
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+  }
+  .match-table td { padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+  .match-table tr:hover td { background: var(--bg3); }
+  .match-bg { font-weight: 600; color: var(--text); }
+  .match-roles { color: var(--muted); }
+
+  /* ── Tips list ── */
+  .tips-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .tips-list li {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    font-size: 0.9rem; color: var(--muted); display: flex; gap: 12px;
+  }
+  .tips-list li .tip-num {
+    font-size: 0.75rem; font-weight: 800; color: var(--accent);
+    background: var(--accent-tint); border-radius: 50%;
+    width: 24px; height: 24px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .tips-list li strong { color: var(--text); }
+
+  /* ── CTA ── */
+  .cta-block {
+    background: linear-gradient(135deg, #1a2635 0%, #162231 100%);
+    border-radius: var(--radius); padding: 36px 32px; text-align: center;
+    margin-top: 48px;
+  }
+  .cta-block h3 { color: #fff; font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+  .cta-block p { color: #7a8fa8; font-size: 0.92rem; margin-bottom: 24px; }
+  .cta-btn {
+    display: inline-block; background: var(--accent); color: #fff;
+    font-weight: 700; font-size: 0.95rem; padding: 13px 28px;
+    border-radius: var(--radius-sm); text-decoration: none; transition: opacity 0.2s;
+  }
+  .cta-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">Draco<span>Hub</span>.</a>
+    <div class="nav-actions">
+      <a href="/" class="nav-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to jobs
+      </a>
+      <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Career Guide</div>
+    <h1>New to <span>Oil & Gas?</span><br>Here's where to start.</h1>
+    <p class="hero-sub">O&G is one of Nigeria's biggest employers — and it's not just for petroleum engineers. Here's how to find your place in the industry regardless of your background.</p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <div class="intro-box">
+    <strong>The biggest myth about O&G careers:</strong> that you need to be a Petroleum Engineer to work in the industry. The truth is, companies like Shell, TotalEnergies, Seplat and hundreds of smaller operators employ people from almost every discipline — finance, law, IT, environmental science, HR, and more.
+  </div>
+
+  <!-- What roles exist -->
+  <h2>What kinds of roles exist in O&G?</h2>
+  <p>The industry is broken into broad functional areas. Most large companies have all of these departments:</p>
+
+  <div class="roles-grid">
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#6366f1"></div>
+        <div class="role-name">Engineering</div>
+      </div>
+      <p class="role-desc">Design, build and maintain the infrastructure — rigs, pipelines, refineries, platforms. Covers mechanical, civil, electrical, process and instrumentation engineers.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#ef4444"></div>
+        <div class="role-name">HSE (Health, Safety & Environment)</div>
+      </div>
+      <p class="role-desc">Ensure operations are safe and environmentally compliant. One of the most in-demand functions — almost every O&G company must have HSE officers by law.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#ca8a04"></div>
+        <div class="role-name">Operations</div>
+      </div>
+      <p class="role-desc">Run the day-to-day — production, logistics, field supervision, vessel operations. Hands-on roles that keep oil and gas actually moving.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#a855f7"></div>
+        <div class="role-name">Project Management</div>
+      </div>
+      <p class="role-desc">Plan and deliver large capital projects — new platforms, pipelines, refineries. Strong demand for PMs with O&G or heavy industry experience.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#22c55e"></div>
+        <div class="role-name">Finance & Commercial</div>
+      </div>
+      <p class="role-desc">Budgeting, cost control, contracts negotiation, procurement. Finance teams in O&G companies are large and need qualified accountants and analysts.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#14b8a6"></div>
+        <div class="role-name">IT / Digital</div>
+      </div>
+      <p class="role-desc">Data analytics, SCADA systems, cybersecurity, SAP/ERP management. The industry is digitising fast and there's a shortage of tech talent who understand O&G.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#f43f5e"></div>
+        <div class="role-name">Legal & Contracts</div>
+      </div>
+      <p class="role-desc">JV agreements, regulatory compliance, tendering, NNPC contracts. Lawyers and contracts professionals are in high demand across operators and service companies.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#3b82f6"></div>
+        <div class="role-name">Supply Chain & Procurement</div>
+      </div>
+      <p class="role-desc">Source and manage vendors, manage logistics, ensure equipment reaches site on time. A critical function with roles at all seniority levels.</p>
+    </div>
+  </div>
+
+  <!-- Background match -->
+  <h2>Which roles suit your background?</h2>
+  <p>You don't need to start over. Here's how common degree backgrounds map to O&G roles:</p>
+
+  <table class="match-table">
+    <thead>
+      <tr>
+        <th>Your background</th>
+        <th>Roles to target in O&G</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="match-bg">Mechanical / Civil / Electrical Engineering</td>
+        <td class="match-roles">Field Engineer, Project Engineer, Maintenance Engineer, Facilities Engineer</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Chemical Engineering / Chemistry / Biochemistry</td>
+        <td class="match-roles">Process Engineer, Lab Analyst, QHSE Officer, Environmental Specialist, Production Chemist</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Earth Sciences / Geology / Physics</td>
+        <td class="match-roles">Geoscientist, Reservoir Engineer (with further study), Wellsite Geologist</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Finance / Accounting / Economics</td>
+        <td class="match-roles">Finance Analyst, Cost Controller, Commercial Analyst, Contracts Officer</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Law / Legal Studies</td>
+        <td class="match-roles">Legal Counsel, Contracts Administrator, Compliance Officer, JV Advisor</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Computer Science / IT / Engineering</td>
+        <td class="match-roles">SAP Consultant, Data Analyst, IT Support, SCADA/Instrumentation Engineer, Cybersecurity</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Business / Management / Supply Chain</td>
+        <td class="match-roles">Procurement Officer, Logistics Coordinator, Supply Chain Analyst, Project Manager</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Environmental / Biology / Public Health</td>
+        <td class="match-roles">HSE Officer, Environmental Analyst, Community Relations, Sustainability Advisor</td>
+      </tr>
+      <tr>
+        <td class="match-bg">HR / Social Sciences / Psychology</td>
+        <td class="match-roles">HR Business Partner, Talent Acquisition, Learning & Development, Admin Officer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Tips -->
+  <h2>How to actually break in</h2>
+
+  <ul class="tips-list">
+    <li>
+      <div class="tip-num">1</div>
+      <div><strong>Target service companies first.</strong> It's often easier to get into O&G through service companies (Schlumberger, Baker Hughes, Halliburton, Oilserv, Amaiden) than going straight to operators like Shell or TotalEnergies. Service companies hire more regularly and are less selective about prior O&G experience.</div>
+    </li>
+    <li>
+      <div class="tip-num">2</div>
+      <div><strong>Get the right certifications.</strong> For HSE: NEBOSH IGC or ISPON membership opens doors fast. For Engineering: COREN registration is almost mandatory. For Finance: ICAN or ACCA. These signal seriousness to O&G hiring managers.</div>
+    </li>
+    <li>
+      <div class="tip-num">3</div>
+      <div><strong>Use industry language on your CV.</strong> Don't just say "managed projects" — say "delivered CAPEX projects within budget." Learn the acronyms: OPEX, CAPEX, FPSO, SIMOPS, HSE MS. Hiring managers notice.</div>
+    </li>
+    <li>
+      <div class="tip-num">4</div>
+      <div><strong>Look for Graduate Trainee programmes.</strong> Shell, TotalEnergies, Seplat, Oando and Dangote all run structured graduate programmes that don't require prior O&G experience. These are some of the best entry points into the industry.</div>
+    </li>
+    <li>
+      <div class="tip-num">5</div>
+      <div><strong>Don't ignore smaller operators.</strong> Mid-sized Nigerian independents (Eroton, Neconde, First E&P, Waltersmith) hire constantly and offer faster career progression than the majors.</div>
+    </li>
+  </ul>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <h3>Get matching O&G jobs delivered to your inbox</h3>
+    <p>Tell us your background and what you're looking for — we'll send you relevant roles every week, filtered to your profile.</p>
+    <a href="/#subscribe" class="cta-btn">Set up your job alerts →</a>
+  </div>
+
+</div>
+
+<script>
+  // Theme toggle
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  const MOON = btn.querySelector('.icon-moon');
+  const SUN  = btn.querySelector('.icon-sun');
+
+  function applyTheme(t) {
+    root.setAttribute('data-theme', t);
+    MOON.style.display = t === 'dark' ? 'block' : 'none';
+    SUN.style.display  = t === 'light' ? 'block' : 'none';
+  }
+
+  applyTheme(localStorage.getItem('dracohub-theme') || 'light');
+
+  btn.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('dracohub-theme', next);
+    applyTheme(next);
+  });
+</script>
+</body>
+</html>

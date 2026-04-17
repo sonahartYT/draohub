@@ -628,11 +628,12 @@ if (alertForm) {
     alertForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const name     = document.getElementById('alertName').value.trim();
-        const email    = document.getElementById('alertEmail').value.trim();
-        const category = document.getElementById('alertCategory').value;
-        const seniority = document.getElementById('alertSeniority').value;
+        const name       = document.getElementById('alertName').value.trim();
+        const email      = document.getElementById('alertEmail').value.trim();
+        const category   = document.getElementById('alertCategory').value;
+        const seniority  = document.getElementById('alertSeniority').value;
         const location_pref = document.getElementById('alertLocation').value;
+        const background = document.getElementById('alertBackground').value;
 
         if (!email) return;
 
@@ -654,6 +655,7 @@ if (alertForm) {
                     category: category || null,
                     seniority: seniority || null,
                     location_pref: location_pref || null,
+                    background: background || null,
                     frequency: 'weekly',
                 }),
             });
