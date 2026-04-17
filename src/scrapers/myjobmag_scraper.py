@@ -12,7 +12,9 @@ Selectors confirmed against live HTML on 2026-04-16:
   Pagination   : ?currentpage=N up to MAX_PAGES
 """
 import logging
+import re
 import time
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -20,6 +22,26 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 
 SOURCE = "myjobmag"
+
+_MONTHS = {
+    "january","february","march","april","may","june",
+    "july","august","september","october","november","december",
+}
+
+def _normalise_date(raw: str | None) -> str | None:
+    """
+    Append current year if date looks like 'DD Month' or 'Month DD' without a year.
+    e.g. '11 March' → '11 March 2026', '3 days ago' → '3 days ago' (unchanged).
+    """
+    if not raw:
+        return None
+    # If it already contains a 4-digit year, leave it alone
+    if re.search(r'\b20\d{2}\b', raw):
+        return raw
+    # If it contains a month name but no year, append current year
+    if any(m in raw.lower() for m in _MONTHS):
+        return f"{raw} {datetime.now().year}"
+    return raw
 BASE_URL = "https://www.myjobmag.com/search/jobs"
 MAX_PAGES = 3
 DELAY_SECONDS = 2
@@ -69,7 +91,9 @@ def _parse_card(card) -> dict:
     description = desc_li.get_text(strip=True) if desc_li else None
 
     date_li = card.find("li", id="job-date")
-    date_posted = date_li.get_text(strip=True) if date_li else None
+    date_raw = date_li.get_text(strip=True) if date_li else None
+    # MyJobMag sometimes returns "11 March" without a year — append current year
+    date_posted = _normalise_date(date_raw)
 
     return {
         "title": title,

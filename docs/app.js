@@ -571,8 +571,15 @@ function escapeHtml(s) { if (!s) return ''; const d = document.createElement('di
 function truncate(s, n) { if (!s) return ''; return s.length > n ? s.slice(0, n) + '...' : s; }
 function formatDate(s) {
     if (!s) return '';
-    try { const d = new Date(s); return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }); }
-    catch { return s; }
+    try {
+        // Handle relative strings from scrapers (e.g. "3 days ago", "2 weeks ago")
+        if (/ago|today|yesterday/i.test(s)) return s;
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+        // Reject implausible years (partial dates like "11 March" parse as year 11)
+        if (d.getFullYear() < 2020) return s;
+        return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch { return s; }
 }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
