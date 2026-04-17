@@ -101,7 +101,7 @@ function shareText(job) {
 }
 
 function shareUrl(job) {
-    return job.apply_url || SITE_URL;
+    return `${SITE_URL}?job=${job.id}`;
 }
 
 function shareBtnsHtml(job, size) {
@@ -120,7 +120,7 @@ function shareBtnsHtml(job, size) {
             <a class="share-btn twitter" href="https://twitter.com/intent/tweet?text=${text}&url=${url}" target="_blank" rel="noopener" title="Share on X" onclick="event.stopPropagation()">
                 <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </a>
-            <button class="share-btn copy-link" onclick="event.stopPropagation(); copyLink('${job.apply_url || SITE_URL}', this)" title="Copy link" style="position:relative;">
+            <button class="share-btn copy-link" onclick="event.stopPropagation(); copyLink('${SITE_URL}?job=${job.id}', this)" title="Copy link" style="position:relative;">
                 <svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                 <span class="tooltip">Copied!</span>
             </button>
@@ -161,7 +161,7 @@ function shareDropdownHtml(job) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             X (Twitter)
         </a>
-        <button class="share-dropdown-item copy" onclick="event.stopPropagation(); copyLink('${job.apply_url || SITE_URL}', this)">
+        <button class="share-dropdown-item copy" onclick="event.stopPropagation(); copyLink('${SITE_URL}?job=${job.id}', this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
             <span class="copy-label">Copy Link</span>
         </button>
@@ -262,6 +262,12 @@ async function init() {
         renderWeeklyStats();
         renderHotJobs();
         updateCollectionBar();
+        // Auto-open job modal if ?job=ID is in the URL (e.g. from shared WhatsApp links)
+        const jobParam = new URLSearchParams(window.location.search).get('job');
+        if (jobParam) {
+            const jobId = parseInt(jobParam, 10);
+            if (!isNaN(jobId)) openModal(jobId);
+        }
     } catch (err) {
         console.error('Failed to load jobs:', err);
         jobsGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Unable to load jobs. Please try again later.</p>';
