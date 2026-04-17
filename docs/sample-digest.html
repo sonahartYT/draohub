@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DracoHub Careers · Sample Weekly Digest</title>
+<style>
+  /* ── Reset ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f0f4f8;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #1a2635;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Outer wrapper ── */
+  .email-wrap {
+    max-width: 660px;
+    margin: 32px auto;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  }
+
+  /* ── Sample banner ── */
+  .sample-banner {
+    background: #1a2635;
+    color: #e8edf3;
+    text-align: center;
+    padding: 10px 24px;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .sample-banner span { color: #ED880D; }
+
+  /* ── Header ── */
+  .header {
+    background: #1a2635;
+    padding: 36px 40px 28px;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+  }
+  .logo span { color: #ED880D; }
+  .week-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ED880D;
+    background: rgba(237,136,13,0.15);
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .header-greeting {
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .header-sub {
+    color: #7a8fa8;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  /* ── Profile pill ── */
+  .profile-bar {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .profile-label {
+    font-size: 0.72rem;
+    color: #7a8fa8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 4px;
+  }
+  .pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(237,136,13,0.2);
+    color: #f0a842;
+  }
+
+  /* ── Stats strip ── */
+  .stats-strip {
+    background: #f8fafc;
+    border-bottom: 1px solid #e8ecf2;
+    display: flex;
+  }
+  .stat-item {
+    flex: 1;
+    padding: 16px;
+    text-align: center;
+    border-right: 1px solid #e8ecf2;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1a2635;
+    letter-spacing: -0.03em;
+  }
+  .stat-lbl {
+    font-size: 0.7rem;
+    color: #8899aa;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+  /* ── Body ── */
+  .body { padding: 32px 40px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 32px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f4f8;
+  }
+  .section-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8899aa;
+  }
+  .section-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #8899aa;
+    margin-left: auto;
+  }
+
+  /* ── Job card ── */
+  .job-card {
+    border: 1px solid #e8ecf2;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+    page-break-inside: avoid;
+  }
+  .job-card:last-child { margin-bottom: 0; }
+
+  .job-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .job-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a2635;
+    line-height: 1.3;
+  }
+  .job-apply {
+    display: inline-block;
+    background: #ED880D;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .job-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .job-company {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #3d5472;
+  }
+  .meta-sep { color: #c8d4e0; font-size: 0.75rem; }
+  .job-loc, .job-date {
+    font-size: 0.78rem;
+    color: #8899aa;
+  }
+
+  .job-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .tag-eng  { background: rgba(99,102,241,0.1);  color: #6366f1; }
+  .tag-hse  { background: rgba(239,68,68,0.1);   color: #ef4444; }
+  .tag-ops  { background: rgba(234,179,8,0.1);   color: #ca8a04; }
+  .tag-pm   { background: rgba(168,85,247,0.1);  color: #a855f7; }
+  .tag-fin  { background: rgba(34,197,94,0.1);   color: #16a34a; }
+  .tag-it   { background: rgba(20,184,166,0.1);  color: #0d9488; }
+  .tag-leg  { background: rgba(244,63,94,0.1);   color: #e11d48; }
+  .tag-sen  { background: rgba(237,136,13,0.12); color: #b45309; }
+  .tag-mid  { background: rgba(99,102,241,0.08); color: #4f46e5; }
+  .tag-grad { background: rgba(34,197,94,0.08);  color: #15803d; }
+
+  .job-desc {
+    font-size: 0.82rem;
+    color: #5a6a7e;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: #f0f4f8;
+    margin: 8px 0 32px;
+  }
+
+  /* ── CTA block ── */
+  .cta-block {
+    background: linear-gradient(135deg, #1a2635 0%, #162231 100%);
+    border-radius: 14px;
+    padding: 28px 28px;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .cta-title {
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .cta-sub {
+    color: #7a8fa8;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .cta-price {
+    color: #ED880D;
+    font-weight: 700;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: #ED880D;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 12px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .cta-note {
+    margin-top: 12px;
+    font-size: 0.72rem;
+    color: #4a5a6e;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    background: #f8fafc;
+    border-top: 1px solid #e8ecf2;
+    padding: 24px 40px;
+    text-align: center;
+  }
+  .footer-logo {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a2635;
+    margin-bottom: 6px;
+  }
+  .footer-logo span { color: #ED880D; }
+  .footer-text {
+    font-size: 0.75rem;
+    color: #8899aa;
+    line-height: 1.6;
+  }
+  .footer-links {
+    margin-top: 10px;
+    font-size: 0.72rem;
+  }
+  .footer-links a { color: #8899aa; text-decoration: underline; margin: 0 6px; }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; }
+    .email-wrap { margin: 0; border-radius: 0; box-shadow: none; }
+    .job-apply { background: #ED880D !important; color: #fff !important; }
+    .cta-btn   { background: #ED880D !important; color: #fff !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="email-wrap">
+
+  <!-- Sample banner -->
+  <div class="sample-banner">⚡ <span>Sample Issue</span> — This is what your weekly digest looks like</div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">Draco<span>Hub</span>.</div>
+      <div class="week-badge">Week of 14 Apr 2026</div>
+    </div>
+    <div class="header-greeting">Good morning, Chidi 👋</div>
+    <div class="header-sub">
+      Here are this week's O&G opportunities matched to your profile.<br>
+      24 new listings scraped. 11 matched your preferences.
+    </div>
+    <div class="profile-bar">
+      <span class="profile-label">Your profile</span>
+      <span class="pill">Engineering</span>
+      <span class="pill">Senior</span>
+      <span class="pill">Lagos · Port Harcourt</span>
+    </div>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="stats-strip">
+    <div class="stat-item">
+      <div class="stat-num">11</div>
+      <div class="stat-lbl">Matched Jobs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">24</div>
+      <div class="stat-lbl">New This Week</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">6</div>
+      <div class="stat-lbl">Companies</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3</div>
+      <div class="stat-lbl">Closing Soon</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Engineering -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:#6366f1"></div>
+        <span class="section-title">Engineering</span>
+        <span class="section-count">3 roles</span>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Engineering – Machinery Engineer / Specialist II</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/engineering-machinery-engineer-specialist-ii-amaiden-energy-nigeria">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Amaiden Energy Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 14 Apr</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-eng">Engineering</span>
+          <span class="tag tag-sen">Senior</span>
+        </div>
+        <div class="job-desc">Evaluate and comment on discipline engineering work performed by contractors and subcontractors to ensure work is being executed in accordance with company standards. Requires strong mechanical engineering background in O&G environment.</div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Project Engineer III</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/project-engineer-iii-scruples-resources-3">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Scruples Resources</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 14 Apr</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-eng">Engineering</span>
+          <span class="tag tag-mid">Mid-Level</span>
+        </div>
+        <div class="job-desc">Performs engineering design evaluations and works to complete projects within budget and scheduling constraints. Reviews industry policies and procedures to ensure data accuracy and safety compliance.</div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Civil Engineer (Graduate Trainee)</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/civil-engineer-graduate-trainee-ucalux-construction-management-and-contracting">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Ucalux Construction Management</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 11 Mar</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-eng">Engineering</span>
+          <span class="tag tag-grad">Graduate/Entry</span>
+        </div>
+        <div class="job-desc">Support the senior engineering team in the daily execution and monitoring of construction activities. Responsible for on-site quality checks, progress reporting, and technical documentation.</div>
+      </div>
+    </div>
+
+    <!-- HSE -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:#ef4444"></div>
+        <span class="section-title">HSE</span>
+        <span class="section-count">2 roles</span>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">HSE Lead</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/hse-lead-oilserv-limited-1">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Oilserv Limited</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date" style="color:#ef4444;font-weight:600;">⚡ Closing soon</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-hse">HSE</span>
+          <span class="tag tag-sen">Senior</span>
+        </div>
+        <div class="job-desc">Lead and manage the Project HSE department. Responsible for development, implementation, and monitoring of the project HSE management system across all site operations and contractor activities.</div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Coating Inspector</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/coating-inspector-dorman-long-engineering">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Dorman Long Engineering</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 13 Apr</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-hse">HSE</span>
+          <span class="tag tag-mid">Mid-Level</span>
+        </div>
+        <div class="job-desc">Inspect surface preparation and coating application in line with approved procedures and manufacturer guidelines. Monitor quality of protective coatings on structural and pipeline assets.</div>
+      </div>
+    </div>
+
+    <!-- Operations -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:#ca8a04"></div>
+        <span class="section-title">Operations</span>
+        <span class="section-count">2 roles</span>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Station Manager</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/station-manager-mainland-oil-gas-co-ltd">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Mainland Oil & Gas Co. Ltd</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 30 Mar</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-ops">Operations</span>
+          <span class="tag tag-sen">Manager</span>
+        </div>
+        <div class="job-desc">Supervise and coordinate all daily shift activities. Oversee pump attendants and cashiers to ensure productivity and accountability. Ensure accurate fuel dispensing, sales reconciliation and stock management.</div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Crane Operator</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/crane-operator-engineering-automation-technology-limited-eatech">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">Engineering Automation Technology Ltd (EATECH)</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 9 Apr</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-ops">Operations</span>
+          <span class="tag tag-mid">Mid-Level</span>
+        </div>
+        <div class="job-desc">Operate various types of cranes to lift, move, position, and place materials and equipment at construction and offshore base sites. Valid crane operator certification required.</div>
+      </div>
+    </div>
+
+    <!-- Project Management -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-dot" style="background:#a855f7"></div>
+        <span class="section-title">Project Management</span>
+        <span class="section-count">2 roles</span>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Senior Project Manager</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/senior-project-manager-spacefinish-africa">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">SpaceFinish Africa</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date" style="color:#ef4444;font-weight:600;">⚡ Closing soon</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-pm">Project Management</span>
+          <span class="tag tag-sen">Senior</span>
+        </div>
+        <div class="job-desc">Oversee and manage construction and fit-out projects from start to finish. Plan, coordinate, and supervise all aspects of project delivery including budget control, scheduling, and stakeholder management.</div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-top">
+          <div class="job-title">Tendering and Commercials Officer</div>
+          <a class="job-apply" href="https://www.myjobmag.com/job/tendering-and-commercials-officer-elper-oilfield-engineering-1">Apply →</a>
+        </div>
+        <div class="job-meta">
+          <span class="job-company">ELPER Oilfield Engineering</span>
+          <span class="meta-sep">·</span>
+          <span class="job-loc">Nigeria</span>
+          <span class="meta-sep">·</span>
+          <span class="job-date">Posted 15 Apr</span>
+        </div>
+        <div class="job-tags">
+          <span class="tag tag-pm">Project Management</span>
+          <span class="tag tag-mid">Mid-Level</span>
+        </div>
+        <div class="job-desc">Manage the end-to-end bidding process, preparing commercial proposals and ensuring regulatory compliance. Experience with O&G tendering frameworks and contract negotiation essential.</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- CTA -->
+    <div class="cta-block">
+      <div class="cta-title">Get this in your inbox every Monday</div>
+      <div class="cta-sub">
+        Jobs curated and matched to your exact profile — so you never miss the right opportunity.<br>
+        <span class="cta-price">From ₦2,000/month.</span> Cancel anytime.
+      </div>
+      <a class="cta-btn" href="https://sonahartyt.github.io/draohub/">Subscribe on DracoHub →</a>
+      <div class="cta-note">🔒 No spam. Unsubscribe in one click.</div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-logo">Draco<span>Hub</span>. Careers</div>
+    <div class="footer-text">
+      Nigeria's O&G job digest. Curated daily, delivered weekly.<br>
+      You're receiving this because you signed up at dracohub.com
+    </div>
+    <div class="footer-links">
+      <a href="#">Manage preferences</a>
+      <a href="#">View on web</a>
+      <a href="#">Unsubscribe</a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
