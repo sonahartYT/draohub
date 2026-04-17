@@ -156,6 +156,28 @@
   }
   .tips-list li strong { color: var(--text); }
 
+  /* ── Background search ── */
+  .bg-search-wrap {
+    position: relative; margin-bottom: 12px;
+  }
+  .bg-search-wrap::before {
+    content: '';
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-size: contain;
+    pointer-events: none;
+  }
+  .bg-search {
+    width: 100%; padding: 12px 16px 12px 40px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 0.95rem; font-family: var(--font);
+    transition: border-color 0.2s;
+  }
+  .bg-search:focus { outline: none; border-color: var(--accent); }
+  .bg-search::placeholder { color: var(--muted); }
+
   /* ── CTA ── */
   .cta-block {
     background: linear-gradient(135deg, #1a2635 0%, #162231 100%);
@@ -268,13 +290,31 @@
       </div>
       <p class="role-desc">Source and manage vendors, manage logistics, ensure equipment reaches site on time. A critical function with roles at all seniority levels.</p>
     </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#f97316"></div>
+        <div class="role-name">Maintenance</div>
+      </div>
+      <p class="role-desc">Keep equipment and facilities running safely and efficiently. Covers mechanical, electrical and instrumentation technicians through to maintenance supervisors and reliability engineers.</p>
+    </div>
+    <div class="role-card">
+      <div class="role-card-top">
+        <div class="role-dot" style="background:#84cc16"></div>
+        <div class="role-name">Science & Laboratory</div>
+      </div>
+      <p class="role-desc">Analyse fluid samples, monitor production chemistry and ensure product quality. Biochemists, chemists and microbiologists have a clear home here across refineries, processing plants and offshore platforms.</p>
+    </div>
   </div>
 
   <!-- Background match -->
   <h2>Which roles suit your background?</h2>
-  <p>You don't need to start over. Here's how common degree backgrounds map to O&G roles:</p>
+  <p>You don't need to start over. Here's how common degree backgrounds map to O&G roles. Type your field below to jump straight to your match:</p>
 
-  <table class="match-table">
+  <div class="bg-search-wrap">
+    <input type="text" id="bgSearch" class="bg-search" placeholder="e.g. biochemistry, law, computer science…" oninput="filterTable(this.value)">
+  </div>
+
+  <table class="match-table" id="matchTable">
     <thead>
       <tr>
         <th>Your background</th>
@@ -284,35 +324,47 @@
     <tbody>
       <tr>
         <td class="match-bg">Mechanical / Civil / Electrical Engineering</td>
-        <td class="match-roles">Field Engineer, Project Engineer, Maintenance Engineer, Facilities Engineer</td>
+        <td class="match-roles">Field Engineer, Project Engineer, Maintenance Engineer, Facilities Engineer, Reliability Engineer</td>
       </tr>
       <tr>
-        <td class="match-bg">Chemical Engineering / Chemistry / Biochemistry</td>
-        <td class="match-roles">Process Engineer, Lab Analyst, QHSE Officer, Environmental Specialist, Production Chemist</td>
+        <td class="match-bg">Chemical Engineering</td>
+        <td class="match-roles">Process Engineer, Production Engineer, QHSE Officer, Production Chemist, Refinery Engineer</td>
       </tr>
       <tr>
-        <td class="match-bg">Earth Sciences / Geology / Physics</td>
-        <td class="match-roles">Geoscientist, Reservoir Engineer (with further study), Wellsite Geologist</td>
+        <td class="match-bg">Biochemistry / Microbiology / Chemistry</td>
+        <td class="match-roles">Lab Analyst, Production Chemist, Environmental Specialist, Water Treatment Analyst, Quality Control Officer</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Biology / Other Life Sciences</td>
+        <td class="match-roles">Environmental Analyst, HSE Officer, Community Health & Safety, Sustainability Advisor</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Earth Sciences / Geology / Geophysics / Physics</td>
+        <td class="match-roles">Wellsite Geologist, Geoscientist, Reservoir Engineer (with further study), Petrophysicist</td>
+      </tr>
+      <tr>
+        <td class="match-bg">Petroleum Engineering</td>
+        <td class="match-roles">Reservoir Engineer, Drilling Engineer, Production Engineer, Well Completion Engineer</td>
       </tr>
       <tr>
         <td class="match-bg">Finance / Accounting / Economics</td>
-        <td class="match-roles">Finance Analyst, Cost Controller, Commercial Analyst, Contracts Officer</td>
+        <td class="match-roles">Finance Analyst, Cost Controller, Commercial Analyst, Contracts Officer, Budget Planner</td>
       </tr>
       <tr>
         <td class="match-bg">Law / Legal Studies</td>
-        <td class="match-roles">Legal Counsel, Contracts Administrator, Compliance Officer, JV Advisor</td>
+        <td class="match-roles">Legal Counsel, Contracts Administrator, Compliance Officer, JV Advisor, Regulatory Affairs</td>
       </tr>
       <tr>
-        <td class="match-bg">Computer Science / IT / Engineering</td>
-        <td class="match-roles">SAP Consultant, Data Analyst, IT Support, SCADA/Instrumentation Engineer, Cybersecurity</td>
+        <td class="match-bg">Computer Science / IT</td>
+        <td class="match-roles">SAP Consultant, Data Analyst, SCADA Engineer, Cybersecurity Analyst, IT Infrastructure</td>
       </tr>
       <tr>
         <td class="match-bg">Business / Management / Supply Chain</td>
-        <td class="match-roles">Procurement Officer, Logistics Coordinator, Supply Chain Analyst, Project Manager</td>
+        <td class="match-roles">Procurement Officer, Logistics Coordinator, Supply Chain Analyst, Project Manager, Operations Coordinator</td>
       </tr>
       <tr>
-        <td class="match-bg">Environmental / Biology / Public Health</td>
-        <td class="match-roles">HSE Officer, Environmental Analyst, Community Relations, Sustainability Advisor</td>
+        <td class="match-bg">Environmental Science / Public Health</td>
+        <td class="match-roles">HSE Officer, Environmental Impact Analyst, Community Relations, Waste Management Officer</td>
       </tr>
       <tr>
         <td class="match-bg">HR / Social Sciences / Psychology</td>
@@ -320,6 +372,7 @@
       </tr>
     </tbody>
   </table>
+  <p id="noMatch" style="display:none;color:var(--muted);font-size:0.9rem;margin-top:8px;">No match found. Try a different keyword or browse the full table above.</p>
 
   <!-- Tips -->
   <h2>How to actually break in</h2>
@@ -339,10 +392,18 @@
     </li>
     <li>
       <div class="tip-num">4</div>
-      <div><strong>Look for Graduate Trainee programmes.</strong> Shell, TotalEnergies, Seplat, Oando and Dangote all run structured graduate programmes that don't require prior O&G experience. These are some of the best entry points into the industry.</div>
+      <div><strong>Get work experience as fast as possible, even if it means volunteering.</strong> A degree with zero O&G exposure is a hard sell. If you can't land a paid role immediately, offer to support an HSE audit, assist at a service company, or shadow a professional in your discipline. Practical exposure on your CV changes everything and shows you're serious about the switch.</div>
     </li>
     <li>
       <div class="tip-num">5</div>
+      <div><strong>Join SPE (Society of Petroleum Engineers).</strong> SPE Nigeria has a strong student and young professional chapter. Membership gives you access to industry events, technical papers, mentorship programmes and a direct network of people already working in O&G. It's one of the fastest ways to close the gap between where you are now and the information, people and opportunities you need to succeed. Join at <a href="https://www.spe.org" target="_blank" rel="noopener" style="color:var(--accent);">spe.org</a>.</div>
+    </li>
+    <li>
+      <div class="tip-num">6</div>
+      <div><strong>Look for Graduate Trainee programmes.</strong> Shell, TotalEnergies, Seplat, Oando and Dangote all run structured graduate programmes that don't require prior O&G experience. These are some of the best entry points into the industry.</div>
+    </li>
+    <li>
+      <div class="tip-num">7</div>
       <div><strong>Don't ignore smaller operators.</strong> Mid-sized Nigerian independents (Eroton, Neconde, First E&P, Waltersmith) hire constantly and offer faster career progression than the majors.</div>
     </li>
   </ul>
@@ -357,6 +418,20 @@
 </div>
 
 <script>
+  // Background table filter
+  function filterTable(q) {
+    const rows = document.querySelectorAll('#matchTable tbody tr');
+    const term = q.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const show = !term || text.includes(term);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('noMatch').style.display = (term && visible === 0) ? 'block' : 'none';
+  }
+
   // Theme toggle
   const root = document.documentElement;
   const btn  = document.getElementById('themeToggle');
