@@ -221,14 +221,76 @@
             <div class="subscribe-card">
                 <div class="subscribe-decor-1"></div>
                 <div class="subscribe-decor-2"></div>
-                <span class="section-tag" style="color: rgba(237,136,13,0.9);">Stay Updated</span>
-                <h2 class="subscribe-heading">Get the Latest <span style="color:#ED880D;">O&amp;G Jobs</span> in Your Inbox</h2>
-                <p class="subscribe-sub">Join our weekly digest — curated oil and gas opportunities delivered every Monday.</p>
-                <form class="subscribe-form" id="subscribeForm">
-                    <input type="email" placeholder="Enter your email address" class="subscribe-input" required>
-                    <button type="submit" class="btn btn-primary">Subscribe</button>
+                <span class="section-tag" style="color: rgba(237,136,13,0.9);">Free Job Alerts</span>
+                <h2 class="subscribe-heading">Get <span style="color:#ED880D;">Personalised O&amp;G Jobs</span> in Your Inbox</h2>
+                <p class="subscribe-sub">Tell us what you're looking for — we'll send you matching roles every week. Free, always.</p>
+
+                <!-- Success state -->
+                <div class="alert-success" id="alertSuccess" style="display:none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <div>
+                        <strong>You're on the list!</strong>
+                        <p>We'll send your first digest of matching jobs soon.</p>
+                    </div>
+                </div>
+
+                <form class="alert-form" id="alertForm">
+                    <div class="alert-form-row">
+                        <div class="alert-field">
+                            <label class="alert-label">Full Name</label>
+                            <input type="text" id="alertName" class="alert-input" placeholder="e.g. Chidi Okafor" required>
+                        </div>
+                        <div class="alert-field">
+                            <label class="alert-label">Email Address</label>
+                            <input type="email" id="alertEmail" class="alert-input" placeholder="you@example.com" required>
+                        </div>
+                    </div>
+                    <div class="alert-form-row">
+                        <div class="alert-field">
+                            <label class="alert-label">Job Category</label>
+                            <select id="alertCategory" class="alert-input alert-select">
+                                <option value="">Any category</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="HSE">HSE</option>
+                                <option value="Operations">Operations</option>
+                                <option value="Finance">Finance</option>
+                                <option value="IT/Digital">IT / Digital</option>
+                                <option value="Legal/Contracts">Legal / Contracts</option>
+                                <option value="Management">Management</option>
+                                <option value="HR">HR</option>
+                                <option value="Project Management">Project Management</option>
+                            </select>
+                        </div>
+                        <div class="alert-field">
+                            <label class="alert-label">Seniority Level</label>
+                            <select id="alertSeniority" class="alert-input alert-select">
+                                <option value="">Any level</option>
+                                <option value="Graduate/Entry">Graduate / Entry</option>
+                                <option value="Mid-Level">Mid-Level</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Executive">Executive</option>
+                            </select>
+                        </div>
+                        <div class="alert-field">
+                            <label class="alert-label">Preferred Location</label>
+                            <select id="alertLocation" class="alert-input alert-select">
+                                <option value="">Anywhere in Nigeria</option>
+                                <option value="Lagos">Lagos</option>
+                                <option value="Port Harcourt">Port Harcourt</option>
+                                <option value="Abuja">Abuja</option>
+                                <option value="Warri">Warri</option>
+                                <option value="Benin">Benin</option>
+                                <option value="Remote">Remote</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary alert-submit" id="alertSubmit">
+                        <span id="alertBtnText">Get Free Job Alerts</span>
+                        <span id="alertBtnSpinner" style="display:none;">Signing up…</span>
+                    </button>
+                    <p class="subscribe-note">Free forever · No spam · Unsubscribe anytime</p>
                 </form>
-                <p class="subscribe-note">No spam. Unsubscribe anytime.</p>
             </div>
         </div>
     </section>
