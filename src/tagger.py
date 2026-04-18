@@ -161,14 +161,24 @@ _SENIORITY_RULES: list[tuple[str, list[str]]] = [
     ("Graduate/Entry", [
         "graduate", "trainee", "intern", "internship", "entry level",
         "entry-level", "junior", " jr ", "fresh", "nysc", "youth corps",
-        "programme", "early career",
+        "programme", "early career", "siwes", "industrial attachment",
+        "industrial trainee", "student industrial",
     ]),
     # Mid-Level is the default — no explicit keywords needed
 ]
 
 # ---- Employment type ----
 _EMPLOYMENT_RULES: list[tuple[str, list[str]]] = [
-    ("Internship", ["intern", "internship", "industrial training", "nysc"]),
+    # SIWES first — more specific than generic internship
+    ("SIWES", [
+        "siwes", "student industrial work experience",
+        "industrial attachment", "industrial trainee",
+    ]),
+    ("Internship", [
+        "intern", "internship", "industrial training",
+        "student intern", "it student",
+    ]),
+    ("NYSC", ["nysc", "youth corps", "corps member"]),
     ("Contract", [
         "contract", "contractor", "temporary", " temp ", "fixed term",
         "fixed-term", "locum",
@@ -276,7 +286,7 @@ seniority:
   Graduate/Entry | Mid-Level | Senior | Manager | Executive
 
 employment_type:
-  Full-time | Contract | Internship
+  Full-time | Contract | Internship | SIWES | NYSC
 
 skills: array of up to 5 specific O&G tools, certifications, or technical skills
   clearly implied by the title (e.g. ["HSSE", "SAP", "NEBOSH", "Petrel", "IWCF"])
@@ -297,7 +307,10 @@ RULES:
   "Director/VP/Chief/GM/MD" → Executive,
   everything else → Mid-Level
 - employment_type: "Contract/Contractor/Temporary" → Contract,
-  "Intern/Industrial Training/NYSC" → Internship, else Full-time
+  "SIWES/Industrial Attachment/Industrial Trainee/Student Industrial Work Experience" → SIWES,
+  "Intern/Internship/Industrial Training/Student Intern" → Internship,
+  "NYSC/Youth Corps/Corps Member" → NYSC,
+  else Full-time
 
 Output format (strict JSON, no other text):
 {"category":"...","discipline":null,"seniority":"...","employment_type":"...","skills":[]}"""
@@ -312,7 +325,7 @@ _VALID_DISCIPLINES = {
     "Project Management", None
 }
 _VALID_SENIORITIES = {"Graduate/Entry", "Mid-Level", "Senior", "Manager", "Executive"}
-_VALID_EMPLOYMENT = {"Full-time", "Contract", "Internship"}
+_VALID_EMPLOYMENT = {"Full-time", "Contract", "Internship", "SIWES", "NYSC"}
 
 
 def _validate_claude_response(data: dict) -> dict:

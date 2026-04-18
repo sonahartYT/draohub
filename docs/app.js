@@ -67,6 +67,7 @@ const searchInput = document.getElementById('searchInput');
 const filterSource = document.getElementById('filterSource');
 const filterCategory = document.getElementById('filterCategory');
 const filterSeniority = document.getElementById('filterSeniority');
+const filterEmployment = document.getElementById('filterEmployment');
 const filterLocation = document.getElementById('filterLocation');
 const filterSort = document.getElementById('filterSort');
 const resultsCount = document.getElementById('resultsCount');
@@ -411,6 +412,7 @@ function applyFilters() {
     const source = filterSource ? filterSource.value : '';
     const category = filterCategory ? filterCategory.value : '';
     const seniority = filterSeniority ? filterSeniority.value : '';
+    const employment = filterEmployment ? filterEmployment.value : '';
     const location = filterLocation.value.toLowerCase();
     const sort = filterSort.value;
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -425,6 +427,7 @@ function applyFilters() {
         if (source && job.source !== source) return false;
         if (category && job.tags?.category !== category) return false;
         if (seniority && job.tags?.seniority !== seniority) return false;
+        if (employment && job.tags?.employment_type !== employment) return false;
         if (location && !(job.location || '').toLowerCase().includes(location)) return false;
         return true;
     });
@@ -494,6 +497,7 @@ function renderJobs() {
                 ${job.tags.category ? `<span class="job-tag tag-category">${escapeHtml(job.tags.category)}</span>` : ''}
                 ${job.tags.discipline ? `<span class="job-tag tag-discipline">${escapeHtml(job.tags.discipline)}</span>` : ''}
                 ${job.tags.seniority && job.tags.seniority !== 'Mid-Level' ? `<span class="job-tag tag-seniority">${escapeHtml(job.tags.seniority)}</span>` : ''}
+                ${job.tags.employment_type && job.tags.employment_type !== 'Full-time' ? `<span class="job-tag tag-employment">${escapeHtml(job.tags.employment_type)}</span>` : ''}
             </div>` : ''}
             <p class="job-card-desc">${escapeHtml(truncate(job.description, 160))}</p>
             <div class="job-card-actions">
@@ -666,6 +670,7 @@ searchInput.addEventListener('input', debounce(applyFilters, 300));
 filterSource && filterSource.addEventListener('change', applyFilters);
 filterCategory && filterCategory.addEventListener('change', applyFilters);
 filterSeniority && filterSeniority.addEventListener('change', applyFilters);
+filterEmployment && filterEmployment.addEventListener('change', applyFilters);
 filterLocation.addEventListener('change', applyFilters);
 filterSort.addEventListener('change', applyFilters);
 loadMoreBtn.addEventListener('click', () => { displayCount += PAGE_SIZE; renderJobs(); });
