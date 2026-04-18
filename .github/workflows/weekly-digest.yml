@@ -1,0 +1,67 @@
+name: Weekly Digest Email
+
+on:
+  schedule:
+    # Every Monday at 8:00 AM UTC (9:00 AM WAT) — after the daily scrape
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (build digest but do not send)'
+        type: boolean
+        default: false
+      preview:
+        description: 'Write digest_preview.html as artifact only'
+        type: boolean
+        default: false
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then echo "ERROR: SUPABASE_URL not set" && exit 1; fi
+          if [ -z "$SUPABASE_KEY" ]; then echo "ERROR: SUPABASE_KEY not set" && exit 1; fi
+          if [ -z "$KIT_API_KEY" ]; then echo "ERROR: KIT_API_KEY not set" && exit 1; fi
+          if [ -z "$KIT_DIGEST_TAG_ID" ]; then echo "ERROR: KIT_DIGEST_TAG_ID not set" && exit 1; fi
+          echo "All secrets configured."
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
+          KIT_DIGEST_TAG_ID: ${{ secrets.KIT_DIGEST_TAG_ID }}
+
+      - name: Send weekly digest
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
+          KIT_DIGEST_TAG_ID: ${{ secrets.KIT_DIGEST_TAG_ID }}
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAGS="--dry-run"; fi
+          if [ "${{ github.event.inputs.preview }}" = "true" ]; then FLAGS="--preview"; fi
+          python scripts/send_digest.py $FLAGS
+
+      - name: Upload preview as artifact
+        if: ${{ github.event.inputs.preview == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-preview-${{ github.run_id }}
+          path: scripts/digest_preview.html
+          retention-days: 7
