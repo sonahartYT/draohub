@@ -17,6 +17,7 @@
       gtag('js', new Date());
       gtag('config', 'G-RW46C4GGWS');
     </script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
 
@@ -326,11 +327,17 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary alert-submit" id="alertSubmit">
-                        <span id="alertBtnText">Sign Up for Job Alerts</span>
-                        <span id="alertBtnSpinner" style="display:none;">Signing up…</span>
-                    </button>
-                    <p class="subscribe-note">No spam · Unsubscribe anytime</p>
+                    <div class="tier-buttons">
+                        <button type="submit" class="btn btn-secondary alert-submit tier-btn-free" id="alertSubmit">
+                            <span id="alertBtnText">Free Job Alerts</span>
+                            <span id="alertBtnSpinner" style="display:none;">Signing up…</span>
+                        </button>
+                        <button type="button" class="btn btn-primary alert-submit tier-btn-digest" id="digestBtn" onclick="startDigestPayment()">
+                            <span id="digestBtnText">Get Weekly Digest — ₦3,000/mo</span>
+                            <span id="digestBtnSpinner" style="display:none;">Opening checkout…</span>
+                        </button>
+                    </div>
+                    <p class="subscribe-note">No spam · Cancel anytime · Secure payment via Paystack</p>
                 </form>
             </div>
         </div>

@@ -8,6 +8,8 @@
 // --- Configuration ---
 const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE';
+const PAYSTACK_PLAN = 'PLN_gvf9n5tp4dbxslv';
 const PAGE_SIZE = 12;
 const SITE_URL = window.location.origin + window.location.pathname;
 
@@ -762,6 +764,73 @@ if (alertForm) {
             alert('Something went wrong — please try again or email us directly.');
         }
     });
+}
+
+// ============================================================
+// PAYSTACK — DIGEST SUBSCRIPTION
+// ============================================================
+function startDigestPayment() {
+    const email = document.getElementById('alertEmail').value.trim();
+    if (!email) {
+        document.getElementById('alertEmail').focus();
+        return;
+    }
+
+    const name       = document.getElementById('alertName').value.trim();
+    const category   = document.getElementById('alertCategory').value;
+    const seniority  = document.getElementById('alertSeniority').value;
+    const location_pref = document.getElementById('alertLocation').value;
+    const background = document.getElementById('alertBackground').value;
+
+    const btn = document.getElementById('digestBtn');
+    document.getElementById('digestBtnText').style.display = 'none';
+    document.getElementById('digestBtnSpinner').style.display = 'inline';
+    btn.disabled = true;
+
+    const handler = PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email,
+        plan: PAYSTACK_PLAN,
+        currency: 'NGN',
+        ref: 'DH-' + Date.now(),
+        metadata: { name, category, seniority, location_pref, background },
+        callback: async function(response) {
+            await handleDigestSuccess({ email, name, category, seniority, location_pref, background }, response.reference);
+        },
+        onClose: function() {
+            document.getElementById('digestBtnText').style.display = 'inline';
+            document.getElementById('digestBtnSpinner').style.display = 'none';
+            btn.disabled = false;
+        },
+    });
+    handler.openIframe();
+}
+
+async function handleDigestSuccess(profile, reference) {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({
+                email: profile.email,
+                name: profile.name || null,
+                category: profile.category || null,
+                seniority: profile.seniority || null,
+                location_pref: profile.location_pref || null,
+                background: profile.background || null,
+                frequency: 'weekly',
+                subscription_status: 'paid',
+                paystack_reference: reference,
+            }),
+        });
+    } catch (e) {
+        console.error('Failed to save subscription:', e);
+    }
+    // Show success regardless — payment already went through
+    alertForm.style.display = 'none';
+    alertSuccess.style.display = 'flex';
+    alertSuccess.querySelector('strong').textContent = 'You\'re subscribed!';
+    alertSuccess.querySelector('p').textContent = 'Your first Weekly Digest will arrive soon. Welcome aboard.';
 }
 
 // ============================================================
