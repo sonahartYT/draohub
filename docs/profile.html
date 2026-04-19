@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Profile — DracoHub Careers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .profile-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-main {
+            flex: 1;
+            padding: 48px 0 80px;
+        }
+        .profile-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+        }
+        .profile-heading {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .profile-sub {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+        }
+        .profile-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-tint);
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 28px;
+        }
+        .profile-section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            margin-top: 28px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .profile-field {
+            margin-bottom: 18px;
+        }
+        .profile-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .profile-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            transition: border-color 0.2s;
+        }
+        .profile-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .profile-save {
+            flex: 1;
+            padding: 13px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .profile-success {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-top: 16px;
+        }
+        .profile-success svg { color: #22c55e; flex-shrink: 0; }
+        .profile-error {
+            display: none;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 16px;
+        }
+        /* Loading / invalid states */
+        .profile-loading {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-muted);
+        }
+        .profile-invalid {
+            text-align: center;
+            padding: 60px 40px;
+        }
+        .profile-invalid h2 { font-size: 1.2rem; margin-bottom: 8px; }
+        .profile-invalid p { color: var(--text-muted); font-size: 0.9rem; }
+    </style>
+</head>
+<body class="profile-wrap">
+
+    <!-- Nav -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Draco<span class="dot">Hub</span>.</a>
+            <div class="nav-actions">
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                    <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="profile-main">
+        <div class="container">
+
+            <!-- Loading state -->
+            <div id="profileLoading" class="profile-card profile-loading">
+                <p>Loading your profile…</p>
+            </div>
+
+            <!-- Invalid token state -->
+            <div id="profileInvalid" class="profile-card profile-invalid" style="display:none;">
+                <h2>Link not found</h2>
+                <p>This profile link is invalid or has expired.<br>Check the email we sent you or <a href="index.html#subscribe" style="color:var(--accent);">sign up again</a>.</p>
+            </div>
+
+            <!-- Profile form -->
+            <div id="profileForm" class="profile-card" style="display:none;">
+                <h1 class="profile-heading">Your Preferences</h1>
+                <p class="profile-sub">Update what you're looking for and we'll make sure your digest matches.</p>
+
+                <div id="profileEmailBadge" class="profile-email">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+                    <span id="profileEmailText"></span>
+                </div>
+
+                <div class="profile-section-label">Personal</div>
+
+                <div class="profile-field">
+                    <label class="profile-label" for="pName">Full Name</label>
+                    <input type="text" id="pName" class="profile-input" placeholder="e.g. Chidi Okafor">
+                </div>
+
+                <div class="profile-section-label">Job Preferences</div>
+
+                <div class="profile-field">
+                    <label class="profile-label" for="pCategory">Job Category</label>
+                    <select id="pCategory" class="profile-input">
+                        <option value="">Any category</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="HSE">HSE</option>
+                        <option value="Operations">Operations</option>
+                        <option value="Finance">Finance</option>
+                        <option value="IT/Digital">IT / Digital</option>
+                        <option value="Legal/Contracts">Legal / Contracts</option>
+                        <option value="Management">Management</option>
+                        <option value="HR">HR</option>
+                        <option value="Project Management">Project Management</option>
+                    </select>
+                </div>
+
+                <div class="profile-field">
+                    <label class="profile-label" for="pSeniority">Seniority Level</label>
+                    <select id="pSeniority" class="profile-input">
+                        <option value="">Any level</option>
+                        <option value="Graduate/Entry">Graduate / Entry</option>
+                        <option value="Mid-Level">Mid-Level</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Executive">Executive</option>
+                    </select>
+                </div>
+
+                <div class="profile-field">
+                    <label class="profile-label" for="pLocation">Preferred Location</label>
+                    <select id="pLocation" class="profile-input">
+                        <option value="">Anywhere in Nigeria</option>
+                        <option value="Lagos">Lagos</option>
+                        <option value="Port Harcourt">Port Harcourt</option>
+                        <option value="Abuja">Abuja</option>
+                        <option value="Warri">Warri</option>
+                        <option value="Benin">Benin</option>
+                        <option value="Remote">Remote</option>
+                    </select>
+                </div>
+
+                <div class="profile-section-label">Background</div>
+
+                <div class="profile-field">
+                    <label class="profile-label" for="pBackground">Your Field / Degree</label>
+                    <select id="pBackground" class="profile-input">
+                        <option value="">Select your field / degree</option>
+                        <option value="Mechanical / Civil / Electrical Engineering">Mechanical / Civil / Electrical Engineering</option>
+                        <option value="Chemical Engineering / Chemistry">Chemical Engineering / Chemistry</option>
+                        <option value="Biochemistry / Biology / Life Sciences">Biochemistry / Biology / Life Sciences</option>
+                        <option value="Earth Sciences / Geology / Physics">Earth Sciences / Geology / Physics</option>
+                        <option value="Petroleum Engineering">Petroleum Engineering</option>
+                        <option value="Finance / Accounting / Economics">Finance / Accounting / Economics</option>
+                        <option value="Law / Legal Studies">Law / Legal Studies</option>
+                        <option value="Computer Science / IT">Computer Science / IT</option>
+                        <option value="Business / Management / Supply Chain">Business / Management / Supply Chain</option>
+                        <option value="Environmental Science / Public Health">Environmental Science / Public Health</option>
+                        <option value="HR / Social Sciences">HR / Social Sciences</option>
+                        <option value="Already working in O&G">Already working in O&amp;G</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary profile-save" id="profileSaveBtn" onclick="saveProfile()">
+                        <span id="saveBtnText">Save Preferences</span>
+                        <span id="saveBtnSpinner" style="display:none;">Saving…</span>
+                    </button>
+                </div>
+
+                <div class="profile-success" id="profileSuccess">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Preferences saved — your next digest will reflect these.
+                </div>
+                <div class="profile-error" id="profileError">
+                    Something went wrong. Please try again.
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+
+        const supaHeaders = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+        };
+
+        let profileToken = null;
+
+        // Theme
+        function initTheme() {
+            const stored = localStorage.getItem('dracohub-theme');
+            if (stored) document.documentElement.setAttribute('data-theme', stored);
+        }
+        function toggleTheme() {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('dracohub-theme', next);
+        }
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        initTheme();
+
+        // Load profile on page load
+        async function loadProfile() {
+            const params = new URLSearchParams(window.location.search);
+            profileToken = params.get('token');
+
+            const loading = document.getElementById('profileLoading');
+            const invalid = document.getElementById('profileInvalid');
+            const form    = document.getElementById('profileForm');
+
+            if (!profileToken) {
+                loading.style.display = 'none';
+                invalid.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch(
+                    `${SUPABASE_URL}/rest/v1/subscribers?profile_token=eq.${profileToken}&select=name,email,category,seniority,location_pref,background`,
+                    { headers: supaHeaders }
+                );
+                const rows = await res.json();
+
+                if (!rows.length) {
+                    loading.style.display = 'none';
+                    invalid.style.display = 'block';
+                    return;
+                }
+
+                const sub = rows[0];
+                document.getElementById('profileEmailText').textContent = sub.email;
+                document.getElementById('pName').value        = sub.name || '';
+                document.getElementById('pCategory').value    = sub.category || '';
+                document.getElementById('pSeniority').value   = sub.seniority || '';
+                document.getElementById('pLocation').value    = sub.location_pref || '';
+                document.getElementById('pBackground').value  = sub.background || '';
+
+                loading.style.display = 'none';
+                form.style.display = 'block';
+
+            } catch (e) {
+                loading.style.display = 'none';
+                invalid.style.display = 'block';
+            }
+        }
+
+        async function saveProfile() {
+            const btn     = document.getElementById('profileSaveBtn');
+            const btnText = document.getElementById('saveBtnText');
+            const spinner = document.getElementById('saveBtnSpinner');
+            const success = document.getElementById('profileSuccess');
+            const error   = document.getElementById('profileError');
+
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'inline';
+            success.style.display = 'none';
+            error.style.display   = 'none';
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_subscriber_profile`, {
+                    method: 'POST',
+                    headers: supaHeaders,
+                    body: JSON.stringify({
+                        p_token:        profileToken,
+                        p_name:         document.getElementById('pName').value.trim() || null,
+                        p_category:     document.getElementById('pCategory').value || null,
+                        p_seniority:    document.getElementById('pSeniority').value || null,
+                        p_location_pref: document.getElementById('pLocation').value || null,
+                        p_background:   document.getElementById('pBackground').value || null,
+                    }),
+                });
+
+                const data = await res.json();
+                if (data?.success) {
+                    success.style.display = 'flex';
+                } else {
+                    throw new Error(data?.error || 'Update failed');
+                }
+            } catch (e) {
+                error.textContent = e.message || 'Something went wrong. Please try again.';
+                error.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

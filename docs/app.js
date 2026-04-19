@@ -730,7 +730,7 @@ if (alertForm) {
                 method: 'POST',
                 headers: {
                     ...supaHeaders,
-                    'Prefer': 'return=minimal',
+                    'Prefer': 'return=representation',
                 },
                 body: JSON.stringify({
                     name: name || null,
@@ -744,8 +744,15 @@ if (alertForm) {
             });
 
             if (res.ok || res.status === 201) {
+                const rows = await res.json().catch(() => []);
+                const token = rows[0]?.profile_token;
                 alertForm.style.display = 'none';
                 alertSuccess.style.display = 'flex';
+                if (token) {
+                    const profileUrl = `${SITE_URL.replace('index.html', '')}profile.html?token=${token}`;
+                    alertSuccess.querySelector('p').innerHTML =
+                        `We'll send matching jobs to your inbox every week. <a href="${profileUrl}" style="color:var(--accent);font-weight:600;">Update your preferences anytime →</a>`;
+                }
             } else if (res.status === 409) {
                 // Already subscribed
                 alertForm.style.display = 'none';
