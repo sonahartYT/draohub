@@ -2199,3 +2199,13 @@ img {
 
 /* padding so fixed nav doesn't cover page content on profile/login pages */
 .profile-main, .login-main { padding-top: 64px; }
+
+/* Log In link inside nav-links (static, hidden when user is signed in) */
+.nav-login-link {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted) !important;
+    transition: color 0.2s;
+}
+.nav-login-link:hover { color: var(--accent) !important; }

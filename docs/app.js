@@ -627,15 +627,20 @@ function clearCollection() {
 function updateNavAuth(session) {
     const navAuth = document.getElementById('navAuth');
     const mobileNavAuth = document.getElementById('mobileNavAuth');
+    const navLoginLink = document.getElementById('navLoginLink');
     if (!navAuth) return;
 
     if (!session) {
-        navAuth.innerHTML = `<a href="login.html" class="nav-login-btn">Log In</a>`;
+        navAuth.innerHTML = '';
+        if (navLoginLink) navLoginLink.style.display = '';
         if (mobileNavAuth) {
             mobileNavAuth.innerHTML = `<a href="login.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">Log In / My Profile</a>`;
         }
         return;
     }
+
+    // Logged in — hide the static Log In link, show avatar instead
+    if (navLoginLink) navLoginLink.style.display = 'none';
 
     const user = session.user;
     const name = user.user_metadata?.name || user.email || '';
@@ -889,7 +894,7 @@ async function handleDigestSuccess(profile, reference) {
             'Account created and digest activated. <a href="profile.html" style="color:var(--accent);font-weight:600;">Complete your profile →</a>';
     } else if (profile.password) {
         alertSuccess.querySelector('p').innerHTML =
-            'Digest activated! Check your email to confirm your account, then <a href="login.html" style="color:var(--accent);">sign in here</a>.';
+            'Payment confirmed! We\'ve sent a <strong>confirmation email</strong> to <strong>' + escapeHtml(profile.email) + '</strong>. Click the link in that email to activate your account, then <a href="login.html" style="color:var(--accent);font-weight:600;">log in here</a>.';
     } else {
         alertSuccess.querySelector('p').textContent =
             'Your first Weekly Digest will arrive soon. Welcome aboard.';
