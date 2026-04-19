@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS subscribers_user_id_idx ON subscribers (user_id);
 -- ------------------------------------------------------------
 ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS years_experience TEXT;        -- '0-1', '1-3', '3-5', '5-10', '10+'
-ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS current_role TEXT;
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS current_job_role TEXT;
 ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS current_company TEXT;
 ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS linkedin_url TEXT;
 ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS employment_status TEXT;       -- 'employed', 'unemployed', 'student', 'nysc', 'siwes'
