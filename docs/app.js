@@ -11,9 +11,15 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE';
 const PAYSTACK_PLAN = 'PLN_gvf9n5tp4dbxslv';
 
-// --- Supabase Auth Client ---
-const { createClient: _createClient } = window.supabase;
-const supabase = _createClient(SUPABASE_URL, SUPABASE_KEY);
+// --- Supabase Auth Client (defensive — jobs load even if CDN fails) ---
+let supabase = null;
+try {
+    if (window.supabase && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+} catch (e) {
+    console.warn('Supabase auth client failed to initialise:', e);
+}
 const PAGE_SIZE = 12;
 const SITE_URL = window.location.origin + window.location.pathname;
 
@@ -686,11 +692,12 @@ function updateNavAuth(session) {
 }
 
 async function authSignOut() {
-    await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut();
     updateNavAuth(null);
 }
 
 async function initNavAuth() {
+    if (!supabase) return;
     const { data: { session } } = await supabase.auth.getSession();
     updateNavAuth(session);
     supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
@@ -865,7 +872,7 @@ async function handleDigestSuccess(profile, reference) {
 
     // 2. Create DracoHub account if a password was provided
     let accountCreated = false;
-    if (profile.password) {
+    if (profile.password && supabase) {
         const { data, error } = await supabase.auth.signUp({
             email: profile.email,
             password: profile.password,
