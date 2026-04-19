@@ -2058,3 +2058,144 @@ img {
     border: 1px solid var(--border);
 }
 }
+
+/* ============================================================
+   AUTH — Nav user button & dropdown
+   ============================================================ */
+
+/* "Log In" link in the nav (shown when logged out) */
+.nav-login-btn {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+.nav-login-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* User avatar button (shown when logged in) */
+.nav-user-wrap {
+    position: relative;
+}
+
+.nav-user-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-tint);
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s;
+}
+.nav-user-btn:hover { background: rgba(237,136,13,0.15); }
+
+.nav-user-avatar {
+    font-family: var(--font-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Dropdown */
+.nav-user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md, 12px);
+    box-shadow: 0 8px 32px rgba(20,42,71,0.12);
+    z-index: 200;
+    overflow: hidden;
+}
+[data-theme="dark"] .nav-user-dropdown {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.nav-user-dropdown.open { display: block; }
+
+.nav-user-info {
+    padding: 14px 16px 10px;
+}
+.nav-user-info strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+.nav-user-info span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.nav-user-divider { height: 1px; background: var(--border); }
+
+.nav-user-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 500;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+}
+.nav-user-item:hover { background: var(--bg-alt); }
+.nav-user-item svg { color: var(--text-muted); flex-shrink: 0; }
+
+.nav-user-signout:hover { background: rgba(239,68,68,0.06); }
+.nav-user-signout:hover, .nav-user-signout:hover svg { color: #ef4444; }
+
+/* ============================================================
+   AUTH — Navbar for profile.html / login.html (uses .navbar class)
+   ============================================================ */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    z-index: 1000;
+    transition: background 0.3s, border-color 0.3s;
+}
+[data-theme="dark"] .navbar { background: rgba(15,20,25,0.92); }
+
+.nav-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* profile.html uses --bg-secondary which may not be defined — alias it */
+:root { --bg-secondary: var(--bg-alt); }
+
+/* padding so fixed nav doesn't cover page content on profile/login pages */
+.profile-main, .login-main { padding-top: 64px; }

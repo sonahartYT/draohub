@@ -18,6 +18,7 @@
       gtag('config', 'G-RW46C4GGWS');
     </script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -33,6 +34,8 @@
                 <a href="#digest" class="nav-cta">Get the Digest</a>
             </div>
             <div class="nav-actions">
+                <!-- Auth state — populated by app.js -->
+                <div id="navAuth"></div>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                     <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                     <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -50,6 +53,9 @@
         <a href="#about" class="mobile-menu-link">About</a>
         <a href="#digest" class="mobile-menu-link">Digest</a>
         <a href="#digest" class="mobile-menu-link nav-cta">Get the Digest</a>
+        <div id="mobileNavAuth">
+            <a href="login.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">Log In / My Profile</a>
+        </div>
     </div>
 
     <!-- Hero -->
@@ -337,6 +343,12 @@
                         <div class="alert-field">
                             <label class="alert-label">Email Address</label>
                             <input type="email" id="alertEmail" class="alert-input" placeholder="you@example.com" required>
+                        </div>
+                    </div>
+                    <div class="alert-form-row">
+                        <div class="alert-field" style="flex:1 1 100%">
+                            <label class="alert-label">Create a Password <span style="color:var(--text-muted);font-weight:400;">(creates your DracoHub account)</span></label>
+                            <input type="password" id="alertPassword" class="alert-input" placeholder="Min. 8 characters" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="alert-form-row">

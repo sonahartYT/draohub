@@ -3,137 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Profile — DracoHub Careers</title>
+    <title>My Profile — DracoHub Careers</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .profile-wrap {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .profile-main { flex: 1; padding: 48px 0 80px; }
+
+        /* Layout */
+        .profile-layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: start; }
+        @media (max-width: 768px) { .profile-layout { grid-template-columns: 1fr; } }
+
+        /* Sidebar */
+        .profile-sidebar { position: sticky; top: 96px; }
+        .profile-avatar-wrap { text-align: center; margin-bottom: 20px; }
+        .profile-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            font-size: 1.6rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            font-family: var(--font-primary);
         }
-        .profile-main {
-            flex: 1;
-            padding: 48px 0 80px;
+        .profile-user-name { font-weight: 700; font-size: 1rem; }
+        .profile-user-email { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .profile-sub-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+            margin-top: 10px;
         }
+        .profile-sub-badge.paid { background: rgba(34,197,94,0.12); color: #16a34a; }
+        .profile-sub-badge.unpaid { background: rgba(237,136,13,0.1); color: var(--accent); }
+        .profile-sub-badge svg { flex-shrink: 0; }
+
+        .profile-nav { margin-top: 24px; }
+        .profile-nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: var(--radius-sm, 8px);
+            font-size: 0.88rem; font-weight: 500; color: var(--text-muted);
+            cursor: pointer; transition: background 0.15s, color 0.15s;
+            text-decoration: none; margin-bottom: 2px;
+        }
+        .profile-nav-item:hover { background: var(--nav-tint, rgba(20,42,71,0.05)); color: var(--text); }
+        .profile-nav-item.active { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
+        .profile-nav-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .profile-signout {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: var(--radius-sm, 8px);
+            font-size: 0.88rem; font-weight: 500; color: var(--text-muted);
+            cursor: pointer; background: none; border: none;
+            font-family: var(--font-body); width: 100%;
+            transition: background 0.15s, color 0.15s;
+        }
+        .profile-signout:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
+
+        /* Card */
         .profile-card {
-            max-width: 600px;
-            margin: 0 auto;
-            background: var(--bg-secondary);
+            background: var(--bg-alt);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 40px;
+            border-radius: var(--radius-lg, 16px);
+            padding: 36px;
         }
-        .profile-heading {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 6px;
+        @media (max-width: 600px) { .profile-card { padding: 24px; } }
+
+        .profile-section-title {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--text-muted);
+            padding-bottom: 10px; border-bottom: 1px solid var(--border);
+            margin-top: 28px; margin-bottom: 20px;
         }
-        .profile-sub {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 32px;
-        }
-        .profile-email {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--accent-tint);
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 20px;
-            margin-bottom: 28px;
-        }
-        .profile-section-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-            margin-top: 28px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-        .profile-field {
-            margin-bottom: 18px;
-        }
-        .profile-label {
-            display: block;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
+        .profile-section-title:first-child { margin-top: 0; }
+
+        .profile-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 500px) { .profile-row { grid-template-columns: 1fr; } }
+        .profile-row.single { grid-template-columns: 1fr; }
+        .profile-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+        @media (max-width: 640px) { .profile-row.triple { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 400px) { .profile-row.triple { grid-template-columns: 1fr; } }
+
+        .profile-field { display: flex; flex-direction: column; gap: 6px; }
+        .profile-label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .profile-label span { font-weight: 400; color: var(--text-muted); }
         .profile-input {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: var(--bg);
-            color: var(--text);
-            font-size: 0.9rem;
-            font-family: var(--font-body);
+            padding: 10px 14px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm, 8px); background: var(--bg);
+            color: var(--text); font-size: 0.9rem; font-family: var(--font-body);
             transition: border-color 0.2s;
         }
-        .profile-input:focus {
-            outline: none;
-            border-color: var(--accent);
+        .profile-input:focus { outline: none; border-color: var(--accent); }
+
+        /* Toggle (open to relocation) */
+        .profile-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+        .profile-toggle-label { font-size: 0.88rem; font-weight: 500; }
+        .profile-toggle-label small { display: block; font-size: 0.78rem; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: var(--border); border-radius: 24px; transition: 0.2s;
         }
-        .profile-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 32px;
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 18px; height: 18px; left: 3px; bottom: 3px;
+            background: #fff; border-radius: 50%; transition: 0.2s;
         }
-        .profile-save {
-            flex: 1;
-            padding: 13px;
-            font-size: 0.95rem;
-            font-weight: 700;
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* Actions */
+        .profile-actions { display: flex; align-items: center; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+        .profile-save-btn { padding: 13px 28px; font-size: 0.95rem; font-weight: 700; }
+        .profile-toast {
+            display: none; align-items: center; gap: 8px;
+            font-size: 0.88rem; color: #16a34a; font-weight: 500;
         }
-        .profile-success {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            background: rgba(34,197,94,0.1);
-            border: 1px solid rgba(34,197,94,0.3);
-            border-radius: var(--radius-sm);
-            padding: 14px 18px;
-            color: var(--text);
-            font-size: 0.9rem;
-            margin-top: 16px;
+        .profile-toast svg { flex-shrink: 0; }
+        .profile-error-msg { display: none; font-size: 0.88rem; color: #ef4444; margin-top: 12px; }
+
+        /* Loading state */
+        .profile-loading { text-align: center; padding: 80px 40px; color: var(--text-muted); }
+        .profile-loading-spinner {
+            width: 32px; height: 32px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.7s linear infinite; margin: 0 auto 16px;
         }
-        .profile-success svg { color: #22c55e; flex-shrink: 0; }
-        .profile-error {
-            display: none;
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.3);
-            border-radius: var(--radius-sm);
-            padding: 14px 18px;
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: 16px;
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* No subscription banner */
+        .profile-no-sub {
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            background: rgba(237,136,13,0.07); border: 1px solid rgba(237,136,13,0.2);
+            border-radius: var(--radius-sm, 8px); padding: 14px 18px; margin-bottom: 28px;
         }
-        /* Loading / invalid states */
-        .profile-loading {
-            text-align: center;
-            padding: 60px 40px;
-            color: var(--text-muted);
-        }
-        .profile-invalid {
-            text-align: center;
-            padding: 60px 40px;
-        }
-        .profile-invalid h2 { font-size: 1.2rem; margin-bottom: 8px; }
-        .profile-invalid p { color: var(--text-muted); font-size: 0.9rem; }
+        .profile-no-sub p { font-size: 0.88rem; color: var(--text); margin: 0; }
+        .profile-no-sub p strong { display: block; margin-bottom: 2px; }
     </style>
 </head>
-<body class="profile-wrap">
+<body>
 
-    <!-- Nav -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">Draco<span class="dot">Hub</span>.</a>
@@ -149,231 +158,461 @@
     <main class="profile-main">
         <div class="container">
 
-            <!-- Loading state -->
-            <div id="profileLoading" class="profile-card profile-loading">
+            <!-- Loading -->
+            <div id="stateLoading" class="profile-loading">
+                <div class="profile-loading-spinner"></div>
                 <p>Loading your profile…</p>
             </div>
 
-            <!-- Invalid token state -->
-            <div id="profileInvalid" class="profile-card profile-invalid" style="display:none;">
-                <h2>Link not found</h2>
-                <p>This profile link is invalid or has expired.<br>Check the email we sent you or <a href="index.html#subscribe" style="color:var(--accent);">sign up again</a>.</p>
-            </div>
+            <!-- Authenticated view -->
+            <div id="stateProfile" style="display:none;">
+                <div class="profile-layout">
 
-            <!-- Profile form -->
-            <div id="profileForm" class="profile-card" style="display:none;">
-                <h1 class="profile-heading">Your Preferences</h1>
-                <p class="profile-sub">Update what you're looking for and we'll make sure your digest matches.</p>
+                    <!-- Sidebar -->
+                    <aside class="profile-sidebar">
+                        <div class="profile-avatar-wrap">
+                            <div class="profile-avatar" id="sidebarAvatar">?</div>
+                            <div class="profile-user-name" id="sidebarName">—</div>
+                            <div class="profile-user-email" id="sidebarEmail">—</div>
+                            <div id="sidebarSubBadge"></div>
+                        </div>
 
-                <div id="profileEmailBadge" class="profile-email">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
-                    <span id="profileEmailText"></span>
-                </div>
+                        <nav class="profile-nav">
+                            <a href="#" class="profile-nav-item active">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                My Profile
+                            </a>
+                            <a href="index.html#jobs" class="profile-nav-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                Browse Jobs
+                            </a>
+                            <div class="profile-nav-divider"></div>
+                            <button class="profile-signout" onclick="signOut()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                Sign Out
+                            </button>
+                        </nav>
+                    </aside>
 
-                <div class="profile-section-label">Personal</div>
+                    <!-- Main form -->
+                    <div class="profile-card">
 
-                <div class="profile-field">
-                    <label class="profile-label" for="pName">Full Name</label>
-                    <input type="text" id="pName" class="profile-input" placeholder="e.g. Chidi Okafor">
-                </div>
+                        <!-- No subscription notice -->
+                        <div id="noSubBanner" class="profile-no-sub" style="display:none;">
+                            <p><strong>No active subscription</strong>Subscribe to the Weekly Digest to get curated O&amp;G jobs every Monday.</p>
+                            <a href="index.html#subscribe" class="btn btn-primary" style="font-size:0.85rem;padding:9px 18px;">Subscribe — ₦3,000/mo</a>
+                        </div>
 
-                <div class="profile-section-label">Job Preferences</div>
+                        <!-- ─── PERSONAL ─── -->
+                        <div class="profile-section-title">Personal</div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pName">Full Name</label>
+                                <input type="text" id="pName" class="profile-input" placeholder="e.g. Chidi Okafor">
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pPhone">Phone Number <span>(optional)</span></label>
+                                <input type="tel" id="pPhone" class="profile-input" placeholder="+234 800 000 0000">
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pState">State of Origin</label>
+                                <select id="pState" class="profile-input">
+                                    <option value="">Select state</option>
+                                    <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option>
+                                    <option>Anambra</option><option>Bauchi</option><option>Bayelsa</option>
+                                    <option>Benue</option><option>Borno</option><option>Cross River</option>
+                                    <option>Delta</option><option>Ebonyi</option><option>Edo</option>
+                                    <option>Ekiti</option><option>Enugu</option><option>FCT (Abuja)</option>
+                                    <option>Gombe</option><option>Imo</option><option>Jigawa</option>
+                                    <option>Kaduna</option><option>Kano</option><option>Katsina</option>
+                                    <option>Kebbi</option><option>Kogi</option><option>Kwara</option>
+                                    <option>Lagos</option><option>Nasarawa</option><option>Niger</option>
+                                    <option>Ogun</option><option>Ondo</option><option>Osun</option>
+                                    <option>Oyo</option><option>Plateau</option><option>Rivers</option>
+                                    <option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pGender">Gender <span>(optional)</span></label>
+                                <select id="pGender" class="profile-input">
+                                    <option value="">Prefer not to say</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
 
-                <div class="profile-field">
-                    <label class="profile-label" for="pCategory">Job Category</label>
-                    <select id="pCategory" class="profile-input">
-                        <option value="">Any category</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="HSE">HSE</option>
-                        <option value="Operations">Operations</option>
-                        <option value="Finance">Finance</option>
-                        <option value="IT/Digital">IT / Digital</option>
-                        <option value="Legal/Contracts">Legal / Contracts</option>
-                        <option value="Management">Management</option>
-                        <option value="HR">HR</option>
-                        <option value="Project Management">Project Management</option>
-                    </select>
-                </div>
+                        <!-- ─── CAREER STATUS ─── -->
+                        <div class="profile-section-title">Career Status</div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pEmploymentStatus">Employment Status</label>
+                                <select id="pEmploymentStatus" class="profile-input">
+                                    <option value="">Select status</option>
+                                    <option value="employed">Currently employed</option>
+                                    <option value="unemployed">Unemployed / Job seeking</option>
+                                    <option value="student">Student</option>
+                                    <option value="nysc">NYSC</option>
+                                    <option value="siwes">SIWES / Industrial Training</option>
+                                    <option value="freelance">Freelance / Consulting</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pJobHunting">Job Hunting Status</label>
+                                <select id="pJobHunting" class="profile-input">
+                                    <option value="">Select status</option>
+                                    <option value="active">Actively looking</option>
+                                    <option value="passive">Open to opportunities</option>
+                                    <option value="browsing">Just browsing</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pCurrentRole">Current Job Title <span>(if employed)</span></label>
+                                <input type="text" id="pCurrentRole" class="profile-input" placeholder="e.g. Process Engineer">
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pCurrentCompany">Current Employer <span>(if employed)</span></label>
+                                <input type="text" id="pCurrentCompany" class="profile-input" placeholder="e.g. Shell Nigeria">
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pYearsExp">Years of Experience</label>
+                                <select id="pYearsExp" class="profile-input">
+                                    <option value="">Select range</option>
+                                    <option value="0-1">Less than 1 year</option>
+                                    <option value="1-3">1 – 3 years</option>
+                                    <option value="3-5">3 – 5 years</option>
+                                    <option value="5-10">5 – 10 years</option>
+                                    <option value="10+">10+ years</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pWorkType">Work Type Preference</label>
+                                <select id="pWorkType" class="profile-input">
+                                    <option value="">No preference</option>
+                                    <option value="onshore">Onshore only</option>
+                                    <option value="offshore">Offshore only</option>
+                                    <option value="both">Both onshore &amp; offshore</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-toggle-row">
+                            <div class="profile-toggle-label">
+                                Open to relocation?
+                                <small>We'll include roles outside your preferred location</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="pRelocation">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
 
-                <div class="profile-field">
-                    <label class="profile-label" for="pSeniority">Seniority Level</label>
-                    <select id="pSeniority" class="profile-input">
-                        <option value="">Any level</option>
-                        <option value="Graduate/Entry">Graduate / Entry</option>
-                        <option value="Mid-Level">Mid-Level</option>
-                        <option value="Senior">Senior</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Executive">Executive</option>
-                    </select>
-                </div>
+                        <!-- ─── EDUCATION ─── -->
+                        <div class="profile-section-title">Education</div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pQualification">Highest Qualification</label>
+                                <select id="pQualification" class="profile-input">
+                                    <option value="">Select qualification</option>
+                                    <option value="OND">OND</option>
+                                    <option value="HND">HND</option>
+                                    <option value="BSc">BSc / B.Eng / B.Tech</option>
+                                    <option value="MSc">MSc / M.Eng / MBA</option>
+                                    <option value="PhD">PhD</option>
+                                    <option value="Professional Cert">Professional Certification</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pBackground">Field / Degree</label>
+                                <select id="pBackground" class="profile-input">
+                                    <option value="">Select your field</option>
+                                    <option value="Petroleum Engineering">Petroleum Engineering</option>
+                                    <option value="Mechanical / Civil / Electrical Engineering">Mechanical / Civil / Electrical Engineering</option>
+                                    <option value="Chemical Engineering / Chemistry">Chemical Engineering / Chemistry</option>
+                                    <option value="Earth Sciences / Geology / Physics">Earth Sciences / Geology / Physics</option>
+                                    <option value="Biochemistry / Biology / Life Sciences">Biochemistry / Biology / Life Sciences</option>
+                                    <option value="Computer Science / IT">Computer Science / IT</option>
+                                    <option value="Finance / Accounting / Economics">Finance / Accounting / Economics</option>
+                                    <option value="Law / Legal Studies">Law / Legal Studies</option>
+                                    <option value="Business / Management / Supply Chain">Business / Management / Supply Chain</option>
+                                    <option value="Environmental Science / Public Health">Environmental Science / Public Health</option>
+                                    <option value="HR / Social Sciences">HR / Social Sciences</option>
+                                    <option value="Already working in O&G">Already working in O&amp;G</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pInstitution">University / Institution</label>
+                                <input type="text" id="pInstitution" class="profile-input" placeholder="e.g. University of Port Harcourt">
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pGradYear">Graduation Year</label>
+                                <select id="pGradYear" class="profile-input">
+                                    <option value="">Select year</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                        </div>
 
-                <div class="profile-field">
-                    <label class="profile-label" for="pLocation">Preferred Location</label>
-                    <select id="pLocation" class="profile-input">
-                        <option value="">Anywhere in Nigeria</option>
-                        <option value="Lagos">Lagos</option>
-                        <option value="Port Harcourt">Port Harcourt</option>
-                        <option value="Abuja">Abuja</option>
-                        <option value="Warri">Warri</option>
-                        <option value="Benin">Benin</option>
-                        <option value="Remote">Remote</option>
-                    </select>
-                </div>
+                        <!-- ─── JOB PREFERENCES ─── -->
+                        <div class="profile-section-title">Job Preferences</div>
+                        <div class="profile-row triple">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pCategory">Job Category</label>
+                                <select id="pCategory" class="profile-input">
+                                    <option value="">Any category</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="HSE">HSE</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="IT/Digital">IT / Digital</option>
+                                    <option value="Legal/Contracts">Legal / Contracts</option>
+                                    <option value="Management">Management</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Project Management">Project Management</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pSeniority">Seniority Level</label>
+                                <select id="pSeniority" class="profile-input">
+                                    <option value="">Any level</option>
+                                    <option value="Graduate/Entry">Graduate / Entry</option>
+                                    <option value="Mid-Level">Mid-Level</option>
+                                    <option value="Senior">Senior</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Executive">Executive</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pLocation">Preferred Location</label>
+                                <select id="pLocation" class="profile-input">
+                                    <option value="">Anywhere in Nigeria</option>
+                                    <option value="Lagos">Lagos</option>
+                                    <option value="Port Harcourt">Port Harcourt</option>
+                                    <option value="Abuja">Abuja</option>
+                                    <option value="Warri">Warri</option>
+                                    <option value="Benin">Benin</option>
+                                    <option value="Remote">Remote</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pSalary">Salary Expectation <span>(per month)</span></label>
+                                <select id="pSalary" class="profile-input">
+                                    <option value="">Prefer not to say</option>
+                                    <option value="Below ₦200k">Below ₦200,000</option>
+                                    <option value="₦200k–₦400k">₦200,000 – ₦400,000</option>
+                                    <option value="₦400k–₦700k">₦400,000 – ₦700,000</option>
+                                    <option value="₦700k–₦1m">₦700,000 – ₦1,000,000</option>
+                                    <option value="₦1m–₦2m">₦1,000,000 – ₦2,000,000</option>
+                                    <option value="Above ₦2m">Above ₦2,000,000</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pLinkedin">LinkedIn Profile URL <span>(optional)</span></label>
+                                <input type="url" id="pLinkedin" class="profile-input" placeholder="https://linkedin.com/in/yourname">
+                            </div>
+                        </div>
 
-                <div class="profile-section-label">Background</div>
+                        <!-- ─── ACTIONS ─── -->
+                        <div class="profile-actions">
+                            <button class="btn btn-primary profile-save-btn" id="profileSaveBtn" onclick="saveProfile()">
+                                <span id="saveBtnText">Save Profile</span>
+                                <span id="saveBtnSpinner" style="display:none;">Saving…</span>
+                            </button>
+                            <div class="profile-toast" id="profileToast">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                Profile saved!
+                            </div>
+                        </div>
+                        <div class="profile-error-msg" id="profileErrorMsg"></div>
 
-                <div class="profile-field">
-                    <label class="profile-label" for="pBackground">Your Field / Degree</label>
-                    <select id="pBackground" class="profile-input">
-                        <option value="">Select your field / degree</option>
-                        <option value="Mechanical / Civil / Electrical Engineering">Mechanical / Civil / Electrical Engineering</option>
-                        <option value="Chemical Engineering / Chemistry">Chemical Engineering / Chemistry</option>
-                        <option value="Biochemistry / Biology / Life Sciences">Biochemistry / Biology / Life Sciences</option>
-                        <option value="Earth Sciences / Geology / Physics">Earth Sciences / Geology / Physics</option>
-                        <option value="Petroleum Engineering">Petroleum Engineering</option>
-                        <option value="Finance / Accounting / Economics">Finance / Accounting / Economics</option>
-                        <option value="Law / Legal Studies">Law / Legal Studies</option>
-                        <option value="Computer Science / IT">Computer Science / IT</option>
-                        <option value="Business / Management / Supply Chain">Business / Management / Supply Chain</option>
-                        <option value="Environmental Science / Public Health">Environmental Science / Public Health</option>
-                        <option value="HR / Social Sciences">HR / Social Sciences</option>
-                        <option value="Already working in O&G">Already working in O&amp;G</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
+                    </div><!-- /profile-card -->
+                </div><!-- /profile-layout -->
+            </div><!-- /stateProfile -->
 
-                <div class="profile-actions">
-                    <button class="btn btn-primary profile-save" id="profileSaveBtn" onclick="saveProfile()">
-                        <span id="saveBtnText">Save Preferences</span>
-                        <span id="saveBtnSpinner" style="display:none;">Saving…</span>
-                    </button>
-                </div>
-
-                <div class="profile-success" id="profileSuccess">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    Preferences saved — your next digest will reflect these.
-                </div>
-                <div class="profile-error" id="profileError">
-                    Something went wrong. Please try again.
-                </div>
-            </div>
-
-        </div>
+        </div><!-- /container -->
     </main>
 
     <script>
         const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const supaHeaders = {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-        };
+        let currentUser = null;
 
-        let profileToken = null;
-
-        // Theme
-        function initTheme() {
+        // ── Theme ────────────────────────────────────────────────
+        (function() {
             const stored = localStorage.getItem('dracohub-theme');
             if (stored) document.documentElement.setAttribute('data-theme', stored);
-        }
-        function toggleTheme() {
+        })();
+        document.getElementById('themeToggle').addEventListener('click', () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('dracohub-theme', next);
-        }
-        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-        initTheme();
+        });
 
-        // Load profile on page load
+        // ── Populate graduation year dropdown ────────────────────
+        (function() {
+            const sel = document.getElementById('pGradYear');
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear + 3; y >= 1990; y--) {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = y;
+                sel.appendChild(opt);
+            }
+        })();
+
+        // ── Load profile ─────────────────────────────────────────
         async function loadProfile() {
-            const params = new URLSearchParams(window.location.search);
-            profileToken = params.get('token');
+            const { data: { session } } = await supabase.auth.getSession();
 
-            const loading = document.getElementById('profileLoading');
-            const invalid = document.getElementById('profileInvalid');
-            const form    = document.getElementById('profileForm');
-
-            if (!profileToken) {
-                loading.style.display = 'none';
-                invalid.style.display = 'block';
+            if (!session) {
+                // Not logged in — redirect to login page
+                window.location.href = 'login.html?next=profile.html';
                 return;
             }
 
-            try {
-                const res = await fetch(
-                    `${SUPABASE_URL}/rest/v1/subscribers?profile_token=eq.${profileToken}&select=name,email,category,seniority,location_pref,background`,
-                    { headers: supaHeaders }
-                );
-                const rows = await res.json();
+            currentUser = session.user;
 
-                if (!rows.length) {
-                    loading.style.display = 'none';
-                    invalid.style.display = 'block';
-                    return;
-                }
+            // Fetch subscriber row linked to this user
+            const { data: rows, error } = await supabase
+                .from('subscribers')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .limit(1);
 
-                const sub = rows[0];
-                document.getElementById('profileEmailText').textContent = sub.email;
-                document.getElementById('pName').value        = sub.name || '';
-                document.getElementById('pCategory').value    = sub.category || '';
-                document.getElementById('pSeniority').value   = sub.seniority || '';
-                document.getElementById('pLocation').value    = sub.location_pref || '';
-                document.getElementById('pBackground').value  = sub.background || '';
+            const sub = rows?.[0] || null;
 
-                loading.style.display = 'none';
-                form.style.display = 'block';
+            // Update sidebar
+            const name = sub?.name || currentUser.user_metadata?.name || '';
+            const initials = name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : currentUser.email[0].toUpperCase();
+            document.getElementById('sidebarAvatar').textContent = initials;
+            document.getElementById('sidebarName').textContent = name || '—';
+            document.getElementById('sidebarEmail').textContent = currentUser.email;
 
-            } catch (e) {
-                loading.style.display = 'none';
-                invalid.style.display = 'block';
+            // Subscription badge
+            const badgeEl = document.getElementById('sidebarSubBadge');
+            if (sub?.subscription_status === 'paid') {
+                badgeEl.innerHTML = `<span class="profile-sub-badge paid">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Digest Active
+                </span>`;
+            } else {
+                badgeEl.innerHTML = `<span class="profile-sub-badge unpaid">No subscription</span>`;
+                document.getElementById('noSubBanner').style.display = 'flex';
             }
+
+            // Populate form fields
+            if (sub) {
+                setVal('pName', sub.name);
+                setVal('pPhone', sub.phone);
+                setVal('pState', sub.state_of_origin);
+                setVal('pGender', sub.gender);
+                setVal('pEmploymentStatus', sub.employment_status);
+                setVal('pJobHunting', sub.job_hunting_status);
+                setVal('pCurrentRole', sub.current_role);
+                setVal('pCurrentCompany', sub.current_company);
+                setVal('pYearsExp', sub.years_experience);
+                setVal('pWorkType', sub.work_type_pref);
+                document.getElementById('pRelocation').checked = !!sub.open_to_relocation;
+                setVal('pQualification', sub.highest_qualification);
+                setVal('pBackground', sub.background);
+                setVal('pInstitution', sub.institution);
+                setVal('pGradYear', sub.graduation_year);
+                setVal('pCategory', sub.category);
+                setVal('pSeniority', sub.seniority);
+                setVal('pLocation', sub.location_pref);
+                setVal('pSalary', sub.salary_expectation);
+                setVal('pLinkedin', sub.linkedin_url);
+            }
+
+            document.getElementById('stateLoading').style.display = 'none';
+            document.getElementById('stateProfile').style.display = 'block';
         }
 
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el && val != null) el.value = val;
+        }
+
+        // ── Save profile ─────────────────────────────────────────
         async function saveProfile() {
-            const btn     = document.getElementById('profileSaveBtn');
-            const btnText = document.getElementById('saveBtnText');
-            const spinner = document.getElementById('saveBtnSpinner');
-            const success = document.getElementById('profileSuccess');
-            const error   = document.getElementById('profileError');
-
+            const btn = document.getElementById('profileSaveBtn');
+            const toast = document.getElementById('profileToast');
+            const errMsg = document.getElementById('profileErrorMsg');
             btn.disabled = true;
-            btnText.style.display = 'none';
-            spinner.style.display = 'inline';
-            success.style.display = 'none';
-            error.style.display   = 'none';
+            document.getElementById('saveBtnText').style.display = 'none';
+            document.getElementById('saveBtnSpinner').style.display = 'inline';
+            toast.style.display = 'none';
+            errMsg.style.display = 'none';
 
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_subscriber_profile`, {
-                    method: 'POST',
-                    headers: supaHeaders,
-                    body: JSON.stringify({
-                        p_token:        profileToken,
-                        p_name:         document.getElementById('pName').value.trim() || null,
-                        p_category:     document.getElementById('pCategory').value || null,
-                        p_seniority:    document.getElementById('pSeniority').value || null,
-                        p_location_pref: document.getElementById('pLocation').value || null,
-                        p_background:   document.getElementById('pBackground').value || null,
-                    }),
-                });
+            const updates = {
+                name:                 document.getElementById('pName').value.trim() || null,
+                phone:                document.getElementById('pPhone').value.trim() || null,
+                state_of_origin:      document.getElementById('pState').value || null,
+                gender:               document.getElementById('pGender').value || null,
+                employment_status:    document.getElementById('pEmploymentStatus').value || null,
+                job_hunting_status:   document.getElementById('pJobHunting').value || null,
+                current_role:         document.getElementById('pCurrentRole').value.trim() || null,
+                current_company:      document.getElementById('pCurrentCompany').value.trim() || null,
+                years_experience:     document.getElementById('pYearsExp').value || null,
+                work_type_pref:       document.getElementById('pWorkType').value || null,
+                open_to_relocation:   document.getElementById('pRelocation').checked,
+                highest_qualification: document.getElementById('pQualification').value || null,
+                background:           document.getElementById('pBackground').value || null,
+                institution:          document.getElementById('pInstitution').value.trim() || null,
+                graduation_year:      document.getElementById('pGradYear').value || null,
+                category:             document.getElementById('pCategory').value || null,
+                seniority:            document.getElementById('pSeniority').value || null,
+                location_pref:        document.getElementById('pLocation').value || null,
+                salary_expectation:   document.getElementById('pSalary').value || null,
+                linkedin_url:         document.getElementById('pLinkedin').value.trim() || null,
+            };
 
-                const data = await res.json();
-                if (data?.success) {
-                    success.style.display = 'flex';
-                } else {
-                    throw new Error(data?.error || 'Update failed');
-                }
-            } catch (e) {
-                error.textContent = e.message || 'Something went wrong. Please try again.';
-                error.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btnText.style.display = 'inline';
-                spinner.style.display = 'none';
+            // Update sidebar name immediately
+            if (updates.name) {
+                const initials = updates.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                document.getElementById('sidebarAvatar').textContent = initials;
+                document.getElementById('sidebarName').textContent = updates.name;
+            }
+
+            const { error } = await supabase
+                .from('subscribers')
+                .update(updates)
+                .eq('user_id', currentUser.id);
+
+            btn.disabled = false;
+            document.getElementById('saveBtnText').style.display = 'inline';
+            document.getElementById('saveBtnSpinner').style.display = 'none';
+
+            if (error) {
+                errMsg.textContent = 'Could not save your profile: ' + error.message;
+                errMsg.style.display = 'block';
+            } else {
+                toast.style.display = 'flex';
+                setTimeout(() => { toast.style.display = 'none'; }, 3000);
             }
         }
 
+        // ── Sign out ─────────────────────────────────────────────
+        async function signOut() {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        // ── Boot ─────────────────────────────────────────────────
         loadProfile();
     </script>
 </body>

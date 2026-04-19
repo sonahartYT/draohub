@@ -10,6 +10,10 @@ const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
 const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE';
 const PAYSTACK_PLAN = 'PLN_gvf9n5tp4dbxslv';
+
+// --- Supabase Auth Client ---
+const { createClient: _createClient } = window.supabase;
+const supabase = _createClient(SUPABASE_URL, SUPABASE_KEY);
 const PAGE_SIZE = 12;
 const SITE_URL = window.location.origin + window.location.pathname;
 
@@ -618,6 +622,76 @@ function clearCollection() {
 }
 
 // ============================================================
+// AUTH — NAV STATE
+// ============================================================
+function updateNavAuth(session) {
+    const navAuth = document.getElementById('navAuth');
+    const mobileNavAuth = document.getElementById('mobileNavAuth');
+    if (!navAuth) return;
+
+    if (!session) {
+        navAuth.innerHTML = `<a href="login.html" class="nav-login-btn">Log In</a>`;
+        if (mobileNavAuth) {
+            mobileNavAuth.innerHTML = `<a href="login.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">Log In / My Profile</a>`;
+        }
+        return;
+    }
+
+    const user = session.user;
+    const name = user.user_metadata?.name || user.email || '';
+    const initials = name
+        ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : user.email[0].toUpperCase();
+
+    navAuth.innerHTML = `
+        <div class="nav-user-wrap" id="navUserWrap">
+            <button class="nav-user-btn" id="navUserBtn" aria-label="Account menu">
+                <span class="nav-user-avatar">${initials}</span>
+            </button>
+            <div class="nav-user-dropdown" id="navUserDropdown">
+                <div class="nav-user-info">
+                    <strong>${escapeHtml(name.split(' ')[0] || user.email)}</strong>
+                    <span>${escapeHtml(user.email)}</span>
+                </div>
+                <div class="nav-user-divider"></div>
+                <a href="profile.html" class="nav-user-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    My Profile
+                </a>
+                <button class="nav-user-item nav-user-signout" onclick="authSignOut()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sign Out
+                </button>
+            </div>
+        </div>`;
+
+    if (mobileNavAuth) {
+        mobileNavAuth.innerHTML = `<a href="profile.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">My Profile</a>`;
+    }
+
+    // Toggle dropdown on click
+    document.getElementById('navUserBtn').addEventListener('click', e => {
+        e.stopPropagation();
+        document.getElementById('navUserDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => {
+        const dd = document.getElementById('navUserDropdown');
+        if (dd) dd.classList.remove('open');
+    });
+}
+
+async function authSignOut() {
+    await supabase.auth.signOut();
+    updateNavAuth(null);
+}
+
+async function initNavAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    updateNavAuth(session);
+    supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
+}
+
+// ============================================================
 // DARK MODE
 // ============================================================
 function initTheme() {
@@ -711,17 +785,32 @@ if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 // PAYSTACK — DIGEST SUBSCRIPTION
 // ============================================================
 function startDigestPayment() {
-    const email = document.getElementById('alertEmail').value.trim();
+    const email    = document.getElementById('alertEmail').value.trim();
+    const password = document.getElementById('alertPassword').value;
+
     if (!email) {
         document.getElementById('alertEmail').focus();
         return;
     }
+    if (password && password.length < 8) {
+        document.getElementById('alertPassword').focus();
+        // show inline hint
+        let hint = document.getElementById('alertPasswordHint');
+        if (!hint) {
+            hint = document.createElement('p');
+            hint.id = 'alertPasswordHint';
+            hint.style.cssText = 'color:#ef4444;font-size:0.8rem;margin-top:4px;';
+            document.getElementById('alertPassword').insertAdjacentElement('afterend', hint);
+        }
+        hint.textContent = 'Password must be at least 8 characters.';
+        return;
+    }
 
-    const name       = document.getElementById('alertName').value.trim();
-    const category   = document.getElementById('alertCategory').value;
-    const seniority  = document.getElementById('alertSeniority').value;
+    const name          = document.getElementById('alertName').value.trim();
+    const category      = document.getElementById('alertCategory').value;
+    const seniority     = document.getElementById('alertSeniority').value;
     const location_pref = document.getElementById('alertLocation').value;
-    const background = document.getElementById('alertBackground').value;
+    const background    = document.getElementById('alertBackground').value;
 
     const btn = document.getElementById('digestBtn');
     document.getElementById('digestBtnText').style.display = 'none';
@@ -736,7 +825,7 @@ function startDigestPayment() {
         ref: 'DH-' + Date.now(),
         metadata: { name, category, seniority, location_pref, background },
         callback: async function(response) {
-            await handleDigestSuccess({ email, name, category, seniority, location_pref, background }, response.reference);
+            await handleDigestSuccess({ email, password, name, category, seniority, location_pref, background }, response.reference);
         },
         onClose: function() {
             document.getElementById('digestBtnText').style.display = 'inline';
@@ -748,34 +837,68 @@ function startDigestPayment() {
 }
 
 async function handleDigestSuccess(profile, reference) {
+    // 1. Save subscriber row immediately (payment went through — this must always succeed)
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
             method: 'POST',
             headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
             body: JSON.stringify({
-                email: profile.email,
-                name: profile.name || null,
-                category: profile.category || null,
-                seniority: profile.seniority || null,
-                location_pref: profile.location_pref || null,
-                background: profile.background || null,
-                frequency: 'weekly',
-                subscription_status: 'paid',
-                paystack_reference: reference,
+                email:                profile.email,
+                name:                 profile.name || null,
+                category:             profile.category || null,
+                seniority:            profile.seniority || null,
+                location_pref:        profile.location_pref || null,
+                background:           profile.background || null,
+                frequency:            'weekly',
+                subscription_status:  'paid',
+                paystack_reference:   reference,
             }),
         });
     } catch (e) {
         console.error('Failed to save subscription:', e);
     }
-    // Show success regardless — payment already went through
+
+    // 2. Create DracoHub account if a password was provided
+    let accountCreated = false;
+    if (profile.password) {
+        const { data, error } = await supabase.auth.signUp({
+            email: profile.email,
+            password: profile.password,
+            options: { data: { name: profile.name } },
+        });
+
+        if (!error && data?.user) {
+            // Link the subscriber row we just inserted to this auth user
+            await supabase.rpc('claim_subscriber', { p_user_id: data.user.id });
+            if (data.session) {
+                updateNavAuth(data.session);
+                accountCreated = true;
+            }
+        } else if (error?.message?.includes('already registered')) {
+            // Existing user — they can sign in at login.html
+        }
+    }
+
+    // 3. Show success
     alertForm.style.display = 'none';
     alertSuccess.style.display = 'flex';
-    alertSuccess.querySelector('strong').textContent = 'You\'re subscribed!';
-    alertSuccess.querySelector('p').textContent = 'Your first Weekly Digest will arrive soon. Welcome aboard.';
+    alertSuccess.querySelector('strong').textContent = "You're subscribed!";
+
+    if (accountCreated) {
+        alertSuccess.querySelector('p').innerHTML =
+            'Account created and digest activated. <a href="profile.html" style="color:var(--accent);font-weight:600;">Complete your profile →</a>';
+    } else if (profile.password) {
+        alertSuccess.querySelector('p').innerHTML =
+            'Digest activated! Check your email to confirm your account, then <a href="login.html" style="color:var(--accent);">sign in here</a>.';
+    } else {
+        alertSuccess.querySelector('p').textContent =
+            'Your first Weekly Digest will arrive soon. Welcome aboard.';
+    }
 }
 
 // ============================================================
 // BOOT
 // ============================================================
 initTheme();
+initNavAuth();
 init();

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — DracoHub Careers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .login-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px 80px; }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-secondary, var(--bg-alt));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg, 16px);
+            padding: 40px;
+        }
+        .login-logo { font-family: var(--font-primary); font-size: 1.4rem; font-weight: 700; margin-bottom: 28px; display: block; color: var(--text); }
+        .login-logo span { color: var(--accent); }
+        .login-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 28px; gap: 0; }
+        .login-tab {
+            flex: 1;
+            padding: 10px 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            font-family: var(--font-body);
+            margin-bottom: -1px;
+        }
+        .login-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .login-form { display: none; }
+        .login-form.active { display: block; }
+        .login-field { margin-bottom: 16px; }
+        .login-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        .login-input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm, 8px);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            transition: border-color 0.2s;
+        }
+        .login-input:focus { outline: none; border-color: var(--accent); }
+        .login-submit {
+            width: 100%;
+            padding: 13px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+        .login-forgot { font-size: 0.82rem; color: var(--text-muted); text-align: right; display: block; margin-top: -8px; margin-bottom: 16px; cursor: pointer; }
+        .login-forgot:hover { color: var(--accent); }
+        .login-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius-sm, 8px);
+            padding: 12px 16px;
+            color: #ef4444;
+            font-size: 0.88rem;
+            margin-top: 14px;
+            display: none;
+        }
+        .login-success {
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            border-radius: var(--radius-sm, 8px);
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 0.88rem;
+            margin-top: 14px;
+            display: none;
+        }
+        .login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 0.8rem; }
+        .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .login-pw-wrap { position: relative; }
+        .login-pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;
+        }
+        .login-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 5px; }
+        .login-spinner { display: none; }
+        .login-btn-text { display: inline; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Draco<span class="dot">Hub</span>.</a>
+            <div class="nav-actions">
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                    <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="login-main">
+        <div class="login-card">
+            <a href="index.html" class="login-logo">Draco<span>Hub</span>.</a>
+
+            <!-- Tabs -->
+            <div class="login-tabs">
+                <button class="login-tab active" id="tabSignIn" onclick="showTab('signin')">Sign In</button>
+                <button class="login-tab" id="tabSignUp" onclick="showTab('signup')">Create Account</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <div class="login-form active" id="formSignIn">
+                <div class="login-field">
+                    <label class="login-label" for="siEmail">Email Address</label>
+                    <input type="email" id="siEmail" class="login-input" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="login-field">
+                    <label class="login-label" for="siPassword">Password</label>
+                    <div class="login-pw-wrap">
+                        <input type="password" id="siPassword" class="login-input" placeholder="Your password" autocomplete="current-password">
+                        <button type="button" class="login-pw-toggle" onclick="togglePw('siPassword', this)" aria-label="Show/hide password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <span class="login-forgot" onclick="showForgotPassword()">Forgot your password?</span>
+                <button class="btn btn-primary login-submit" id="btnSignIn" onclick="signIn()">
+                    <span class="login-btn-text">Sign In</span>
+                    <span class="login-spinner">Signing in…</span>
+                </button>
+                <div class="login-error" id="siError"></div>
+                <div class="login-success" id="siSuccess"></div>
+            </div>
+
+            <!-- Create Account Form -->
+            <div class="login-form" id="formSignUp">
+                <div class="login-field">
+                    <label class="login-label" for="suName">Full Name</label>
+                    <input type="text" id="suName" class="login-input" placeholder="e.g. Chidi Okafor" autocomplete="name">
+                </div>
+                <div class="login-field">
+                    <label class="login-label" for="suEmail">Email Address</label>
+                    <input type="email" id="suEmail" class="login-input" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="login-field">
+                    <label class="login-label" for="suPassword">Password</label>
+                    <div class="login-pw-wrap">
+                        <input type="password" id="suPassword" class="login-input" placeholder="Min. 8 characters" autocomplete="new-password">
+                        <button type="button" class="login-pw-toggle" onclick="togglePw('suPassword', this)" aria-label="Show/hide password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <p class="login-hint">Already subscribed via email? Create an account with the same email to access your profile.</p>
+                </div>
+                <button class="btn btn-primary login-submit" id="btnSignUp" onclick="signUp()">
+                    <span class="login-btn-text">Create Account</span>
+                    <span class="login-spinner">Creating account…</span>
+                </button>
+                <div class="login-error" id="suError"></div>
+                <div class="login-success" id="suSuccess"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Redirect if already signed in
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) redirectAfterLogin();
+        });
+
+        // Theme
+        (function() {
+            const stored = localStorage.getItem('dracohub-theme');
+            if (stored) document.documentElement.setAttribute('data-theme', stored);
+        })();
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('dracohub-theme', next);
+        });
+
+        // Get redirect target from ?next= param or default to profile
+        function redirectAfterLogin() {
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get('next');
+            window.location.href = next || 'profile.html';
+        }
+
+        function showTab(tab) {
+            document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
+            document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
+            document.getElementById('formSignIn').classList.toggle('active', tab === 'signin');
+            document.getElementById('formSignUp').classList.toggle('active', tab === 'signup');
+        }
+
+        function togglePw(inputId, btn) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            btn.querySelector('.login-btn-text').style.display = loading ? 'none' : 'inline';
+            btn.querySelector('.login-spinner').style.display = loading ? 'inline' : 'none';
+        }
+
+        async function signIn() {
+            const email = document.getElementById('siEmail').value.trim();
+            const password = document.getElementById('siPassword').value;
+            const errEl = document.getElementById('siError');
+            const sucEl = document.getElementById('siSuccess');
+            errEl.style.display = 'none';
+            sucEl.style.display = 'none';
+
+            if (!email || !password) {
+                errEl.textContent = 'Please enter your email and password.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            setLoading('btnSignIn', true);
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            setLoading('btnSignIn', false);
+
+            if (error) {
+                errEl.textContent = error.message === 'Invalid login credentials'
+                    ? 'Email or password is incorrect. Try again.'
+                    : error.message;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            // Try to link any existing subscriber row (e.g. subscribed before creating account)
+            if (data.user) {
+                await supabase.rpc('claim_subscriber', { p_user_id: data.user.id });
+            }
+
+            sucEl.textContent = 'Signed in! Redirecting…';
+            sucEl.style.display = 'block';
+            setTimeout(redirectAfterLogin, 800);
+        }
+
+        async function signUp() {
+            const name = document.getElementById('suName').value.trim();
+            const email = document.getElementById('suEmail').value.trim();
+            const password = document.getElementById('suPassword').value;
+            const errEl = document.getElementById('suError');
+            const sucEl = document.getElementById('suSuccess');
+            errEl.style.display = 'none';
+            sucEl.style.display = 'none';
+
+            if (!email || !password) {
+                errEl.textContent = 'Please enter your email and a password.';
+                errEl.style.display = 'block';
+                return;
+            }
+            if (password.length < 8) {
+                errEl.textContent = 'Password must be at least 8 characters.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            setLoading('btnSignUp', true);
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { name } }
+            });
+            setLoading('btnSignUp', false);
+
+            if (error) {
+                errEl.textContent = error.message.includes('already registered')
+                    ? 'An account with this email already exists. Try signing in instead.'
+                    : error.message;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (!data.session) {
+                // Email confirmation required
+                sucEl.innerHTML = 'Check your email to confirm your account, then come back to sign in.';
+                sucEl.style.display = 'block';
+                return;
+            }
+
+            // Signed in immediately — link existing subscriber row if any
+            if (data.user) {
+                await supabase.rpc('claim_subscriber', { p_user_id: data.user.id });
+            }
+
+            sucEl.textContent = 'Account created! Redirecting to your profile…';
+            sucEl.style.display = 'block';
+            setTimeout(redirectAfterLogin, 800);
+        }
+
+        async function showForgotPassword() {
+            const email = document.getElementById('siEmail').value.trim();
+            const errEl = document.getElementById('siError');
+            const sucEl = document.getElementById('siSuccess');
+            errEl.style.display = 'none';
+            sucEl.style.display = 'none';
+
+            if (!email) {
+                errEl.textContent = 'Enter your email address above, then click "Forgot your password?"';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/login.html',
+            });
+
+            if (error) {
+                errEl.textContent = error.message;
+                errEl.style.display = 'block';
+            } else {
+                sucEl.textContent = 'Password reset email sent — check your inbox.';
+                sucEl.style.display = 'block';
+            }
+        }
+
+        // Handle password reset redirect (Supabase sends token in URL hash)
+        supabase.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                const newPass = prompt('Enter your new password (min. 8 characters):');
+                if (newPass && newPass.length >= 8) {
+                    supabase.auth.updateUser({ password: newPass }).then(({ error }) => {
+                        if (error) alert('Error: ' + error.message);
+                        else {
+                            alert('Password updated! You are now signed in.');
+                            redirectAfterLogin();
+                        }
+                    });
+                }
+            }
+        });
+
+        // Allow Enter key to submit
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('formSignIn').classList.contains('active')) signIn();
+                else signUp();
+            }
+        });
+    </script>
+</body>
+</html>
