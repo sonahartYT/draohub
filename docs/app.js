@@ -699,79 +699,13 @@ document.getElementById('clearCollection').addEventListener('click', clearCollec
 document.querySelectorAll('.mobile-menu-link').forEach(l => l.addEventListener('click', () => mobileMenu.classList.remove('open')));
 
 // ============================================================
-// JOB ALERT SIGNUP
+// DIGEST FORM REFS
 // ============================================================
-const alertForm     = document.getElementById('alertForm');
-const alertSuccess  = document.getElementById('alertSuccess');
-const alertSubmit   = document.getElementById('alertSubmit');
-const alertBtnText  = document.getElementById('alertBtnText');
-const alertBtnSpinner = document.getElementById('alertBtnSpinner');
+const alertForm    = document.getElementById('alertForm');
+const alertSuccess = document.getElementById('alertSuccess');
 
-if (alertForm) {
-    alertForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const name       = document.getElementById('alertName').value.trim();
-        const email      = document.getElementById('alertEmail').value.trim();
-        const category   = document.getElementById('alertCategory').value;
-        const seniority  = document.getElementById('alertSeniority').value;
-        const location_pref = document.getElementById('alertLocation').value;
-        const background = document.getElementById('alertBackground').value;
-
-        if (!email) return;
-
-        // Loading state
-        alertSubmit.disabled = true;
-        alertBtnText.style.display = 'none';
-        alertBtnSpinner.style.display = 'inline';
-
-        try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
-                method: 'POST',
-                headers: {
-                    ...supaHeaders,
-                    'Prefer': 'return=representation',
-                },
-                body: JSON.stringify({
-                    name: name || null,
-                    email,
-                    category: category || null,
-                    seniority: seniority || null,
-                    location_pref: location_pref || null,
-                    background: background || null,
-                    frequency: 'weekly',
-                }),
-            });
-
-            if (res.ok || res.status === 201) {
-                const rows = await res.json().catch(() => []);
-                const token = rows[0]?.profile_token;
-                alertForm.style.display = 'none';
-                alertSuccess.style.display = 'flex';
-                if (token) {
-                    const profileUrl = `${SITE_URL.replace('index.html', '')}profile.html?token=${token}`;
-                    alertSuccess.querySelector('p').innerHTML =
-                        `We'll send matching jobs to your inbox every week. <a href="${profileUrl}" style="color:var(--accent);font-weight:600;">Update your preferences anytime →</a>`;
-                }
-            } else if (res.status === 409) {
-                // Already subscribed
-                alertForm.style.display = 'none';
-                alertSuccess.style.display = 'flex';
-                alertSuccess.querySelector('strong').textContent = 'Already subscribed!';
-                alertSuccess.querySelector('p').textContent = "You're already on the list — we'll be in touch soon.";
-            } else {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.message || `Error ${res.status}`);
-            }
-        } catch (err) {
-            console.error('Signup error:', err);
-            alertSubmit.disabled = false;
-            alertBtnText.style.display = 'inline';
-            alertBtnSpinner.style.display = 'none';
-            alert('Something went wrong — please try again or email us directly.');
-        }
-    });
-}
+// Prevent accidental form submission (no free tier — Paystack button handles everything)
+if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 
 // ============================================================
 // PAYSTACK — DIGEST SUBSCRIPTION
