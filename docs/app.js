@@ -112,9 +112,8 @@ const supaHeaders = {
 };
 
 async function fetchJobs() {
-    const url = `${SUPABASE_URL}/rest/v1/raw_jobs?select=*&order=created_at.desc`;
-    const res = await fetch(url, { headers: supaHeaders });
-    if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+    const res = await fetch('./jobs.json');
+    if (!res.ok) throw new Error(`Failed to fetch jobs: ${res.status}`);
     return res.json();
 }
 
