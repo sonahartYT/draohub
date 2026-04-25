@@ -441,7 +441,7 @@ Rules:
 - Return ONLY the JSON array, no other text"""
 
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
+        model="claude-haiku-4-5",
         max_tokens=600,
         messages=[{"role": "user", "content": prompt}],
     )
