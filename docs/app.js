@@ -623,15 +623,9 @@ function clearCollection() {
 
 // ============================================================
 // AUTH — NAV STATE (index.html only, non-blocking)
+// Supabase CDN is injected dynamically so it NEVER blocks jobs.
 // ============================================================
 let supabase = null;
-try {
-    if (window.supabase && window.supabase.createClient) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-} catch (e) {
-    console.warn('Supabase client init failed (auth nav will be skipped):', e);
-}
 
 function updateNavAuth(session) {
     const navAuth = document.getElementById('navAuth');
@@ -698,12 +692,21 @@ async function navSignOut() {
 }
 
 function initNavAuth() {
-    if (!supabase) return;
-    // Run async — never blocks jobs from loading
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        updateNavAuth(session);
-    });
-    supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
+    // Inject Supabase CDN dynamically — jobs are already loading by this point.
+    // If the CDN is slow or fails, jobs are completely unaffected.
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.onload = () => {
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            supabase.auth.getSession().then(({ data: { session } }) => updateNavAuth(session));
+            supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
+        } catch (e) {
+            console.warn('Supabase auth nav init failed:', e);
+        }
+    };
+    script.onerror = () => console.warn('Supabase CDN failed to load — auth nav skipped');
+    document.head.appendChild(script);
 }
 
 // ============================================================
