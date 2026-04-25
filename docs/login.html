@@ -174,15 +174,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // Redirect if already signed in
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) redirectAfterLogin();
-        });
+        // ── UI helpers — defined first, before any Supabase init.
+        // These must never crash, regardless of auth state.
 
         // Theme
         (function() {
@@ -195,13 +188,6 @@
             localStorage.setItem('dracohub-theme', next);
         });
 
-        // Get redirect target from ?next= param or default to profile
-        function redirectAfterLogin() {
-            const params = new URLSearchParams(window.location.search);
-            const next = params.get('next');
-            window.location.href = next || 'profile.html';
-        }
-
         function showTab(tab) {
             document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
             document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
@@ -209,7 +195,7 @@
             document.getElementById('formSignUp').classList.toggle('active', tab === 'signup');
         }
 
-        function togglePw(inputId, btn) {
+        function togglePw(inputId) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
@@ -221,144 +207,142 @@
             btn.querySelector('.login-spinner').style.display = loading ? 'inline' : 'none';
         }
 
-        async function signIn() {
-            const email = document.getElementById('siEmail').value.trim();
-            const password = document.getElementById('siPassword').value;
-            const errEl = document.getElementById('siError');
-            const sucEl = document.getElementById('siSuccess');
-            errEl.style.display = 'none';
-            sucEl.style.display = 'none';
-
-            if (!email || !password) {
-                errEl.textContent = 'Please enter your email and password.';
-                errEl.style.display = 'block';
-                return;
-            }
-
-            setLoading('btnSignIn', true);
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            setLoading('btnSignIn', false);
-
-            if (error) {
-                errEl.textContent = error.message === 'Invalid login credentials'
-                    ? 'Email or password is incorrect. Try again.'
-                    : error.message;
-                errEl.style.display = 'block';
-                return;
-            }
-
-            // Try to link any existing subscriber row (e.g. subscribed before creating account)
-            if (data.user) {
-                await supabase.rpc('claim_subscriber', { p_user_id: data.user.id });
-            }
-
-            sucEl.textContent = 'Signed in! Redirecting…';
-            sucEl.style.display = 'block';
-            setTimeout(redirectAfterLogin, 800);
+        function showError(elId, msg) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+        function showSuccess(elId, html) {
+            const el = document.getElementById(elId);
+            el.innerHTML = html;
+            el.style.display = 'block';
+        }
+        function clearMessages(...ids) {
+            ids.forEach(id => { document.getElementById(id).style.display = 'none'; });
         }
 
-        async function signUp() {
-            const name = document.getElementById('suName').value.trim();
-            const email = document.getElementById('suEmail').value.trim();
-            const password = document.getElementById('suPassword').value;
-            const errEl = document.getElementById('suError');
-            const sucEl = document.getElementById('suSuccess');
-            errEl.style.display = 'none';
-            sucEl.style.display = 'none';
-
-            if (!email || !password) {
-                errEl.textContent = 'Please enter your email and a password.';
-                errEl.style.display = 'block';
-                return;
-            }
-            if (password.length < 8) {
-                errEl.textContent = 'Password must be at least 8 characters.';
-                errEl.style.display = 'block';
-                return;
-            }
-
-            setLoading('btnSignUp', true);
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: { data: { name } }
-            });
-            setLoading('btnSignUp', false);
-
-            if (error) {
-                errEl.textContent = error.message.includes('already registered')
-                    ? 'An account with this email already exists. Try signing in instead.'
-                    : error.message;
-                errEl.style.display = 'block';
-                return;
-            }
-
-            if (!data.session) {
-                // Email confirmation required
-                sucEl.innerHTML = 'Check your email to confirm your account, then come back to sign in.';
-                sucEl.style.display = 'block';
-                return;
-            }
-
-            // Signed in immediately — link existing subscriber row if any
-            if (data.user) {
-                await supabase.rpc('claim_subscriber', { p_user_id: data.user.id });
-            }
-
-            sucEl.textContent = 'Account created! Redirecting to your profile…';
-            sucEl.style.display = 'block';
-            setTimeout(redirectAfterLogin, 800);
+        function redirectAfterLogin() {
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get('next');
+            window.location.href = next || 'profile.html';
         }
 
-        async function showForgotPassword() {
-            const email = document.getElementById('siEmail').value.trim();
-            const errEl = document.getElementById('siError');
-            const sucEl = document.getElementById('siSuccess');
-            errEl.style.display = 'none';
-            sucEl.style.display = 'none';
-
-            if (!email) {
-                errEl.textContent = 'Enter your email address above, then click "Forgot your password?"';
-                errEl.style.display = 'block';
-                return;
-            }
-
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '/login.html',
-            });
-
-            if (error) {
-                errEl.textContent = error.message;
-                errEl.style.display = 'block';
-            } else {
-                sucEl.textContent = 'Password reset email sent — check your inbox.';
-                sucEl.style.display = 'block';
-            }
-        }
-
-        // Handle password reset redirect (Supabase sends token in URL hash)
-        supabase.auth.onAuthStateChange((event) => {
-            if (event === 'PASSWORD_RECOVERY') {
-                const newPass = prompt('Enter your new password (min. 8 characters):');
-                if (newPass && newPass.length >= 8) {
-                    supabase.auth.updateUser({ password: newPass }).then(({ error }) => {
-                        if (error) alert('Error: ' + error.message);
-                        else {
-                            alert('Password updated! You are now signed in.');
-                            redirectAfterLogin();
-                        }
-                    });
-                }
-            }
-        });
-
-        // Allow Enter key to submit
+        // Allow Enter key to submit whichever form is active
         document.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 if (document.getElementById('formSignIn').classList.contains('active')) signIn();
                 else signUp();
             }
         });
+
+        // ── Supabase init — wrapped so a CDN hiccup can't kill the UI functions above
+        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+
+        let supabase = null;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error('Supabase init failed:', e);
+            // Show a gentle warning — buttons still work, auth calls will show a friendly error
+            document.querySelectorAll('.login-form.active .login-error').forEach(el => {
+                el.textContent = 'Auth service failed to load. Please refresh the page.';
+                el.style.display = 'block';
+            });
+        }
+
+        // Redirect if already signed in
+        if (supabase) {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) redirectAfterLogin();
+            });
+
+            // Handle password reset redirect (Supabase puts token in URL hash)
+            supabase.auth.onAuthStateChange((event) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    const newPass = prompt('Enter your new password (min. 8 characters):');
+                    if (newPass && newPass.length >= 8) {
+                        supabase.auth.updateUser({ password: newPass }).then(({ error }) => {
+                            if (error) alert('Error: ' + error.message);
+                            else { alert('Password updated! You are now signed in.'); redirectAfterLogin(); }
+                        });
+                    }
+                }
+            });
+        }
+
+        // ── Auth actions
+
+        async function signIn() {
+            clearMessages('siError', 'siSuccess');
+            if (!supabase) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
+
+            const email    = document.getElementById('siEmail').value.trim();
+            const password = document.getElementById('siPassword').value;
+            if (!email || !password) { showError('siError', 'Please enter your email and password.'); return; }
+
+            setLoading('btnSignIn', true);
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            setLoading('btnSignIn', false);
+
+            if (error) {
+                showError('siError', error.message === 'Invalid login credentials'
+                    ? 'Email or password is incorrect. Try again.' : error.message);
+                return;
+            }
+
+            if (data.user) await supabase.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
+
+            showSuccess('siSuccess', 'Signed in! Redirecting…');
+            setTimeout(redirectAfterLogin, 800);
+        }
+
+        async function signUp() {
+            clearMessages('suError', 'suSuccess');
+            if (!supabase) { showError('suError', 'Auth service unavailable. Please refresh.'); return; }
+
+            const name     = document.getElementById('suName').value.trim();
+            const email    = document.getElementById('suEmail').value.trim();
+            const password = document.getElementById('suPassword').value;
+
+            if (!email || !password) { showError('suError', 'Please enter your email and a password.'); return; }
+            if (password.length < 8)  { showError('suError', 'Password must be at least 8 characters.'); return; }
+
+            setLoading('btnSignUp', true);
+            const { data, error } = await supabase.auth.signUp({
+                email, password, options: { data: { name } }
+            });
+            setLoading('btnSignUp', false);
+
+            if (error) {
+                showError('suError', error.message.includes('already registered')
+                    ? 'An account with this email already exists. Try signing in instead.' : error.message);
+                return;
+            }
+
+            if (!data.session) {
+                showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.');
+                return;
+            }
+
+            if (data.user) await supabase.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
+            showSuccess('suSuccess', 'Account created! Redirecting to your profile…');
+            setTimeout(redirectAfterLogin, 800);
+        }
+
+        async function showForgotPassword() {
+            clearMessages('siError', 'siSuccess');
+            if (!supabase) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
+
+            const email = document.getElementById('siEmail').value.trim();
+            if (!email) { showError('siError', 'Enter your email address above first, then click "Forgot your password?"'); return; }
+
+            const redirectTo = window.location.href.split('?')[0]; // back to login.html (no query string)
+            const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+            if (error) showError('siError', error.message);
+            else showSuccess('siSuccess', 'Password reset email sent — check your inbox.');
+        }
     </script>
 </body>
 </html>
