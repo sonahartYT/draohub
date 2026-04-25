@@ -3,3 +3,4 @@ python-dotenv==1.1.0
 python-jobspy
 beautifulsoup4
 anthropic
+mjml

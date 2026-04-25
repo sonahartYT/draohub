@@ -124,128 +124,171 @@ def week_label() -> str:
 
 
 def job_row_html(job: dict) -> str:
-    title    = job.get("job_title") or "Untitled"
-    company  = job.get("company") or "Company not listed"
-    location = job.get("location") or ""
-    url      = job.get("apply_url") or f"{SITE_URL}?job={job['id']}"
-    tags     = job.get("tags") or {}
-    seniority   = tags.get("seniority") or ""
-    employment  = tags.get("employment_type") or ""
+    title      = job.get("job_title") or "Untitled"
+    company    = job.get("company") or "Company not listed"
+    location   = job.get("location") or ""
+    url        = job.get("apply_url") or f"{SITE_URL}?job={job['id']}"
+    tags       = job.get("tags") or {}
+    seniority  = tags.get("seniority") or ""
+    employment = tags.get("employment_type") or ""
 
     badge = ""
     if employment and employment != "Full-time":
-        badge = f'<span style="display:inline-block;background:rgba(237,136,13,0.15);color:{ACCENT};font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;text-transform:uppercase;vertical-align:middle;">{employment}</span>'
+        badge = (
+            f' <span style="display:inline-block;background:rgba(237,136,13,0.12);'
+            f'color:#ED880D;font-size:11px;font-weight:700;padding:2px 7px;'
+            f'border-radius:8px;text-transform:uppercase;vertical-align:middle;">'
+            f'{employment}</span>'
+        )
     elif seniority and seniority not in ("Mid-Level",):
-        badge = f'<span style="display:inline-block;background:#f0f4f8;color:#4a6080;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">{seniority}</span>'
+        badge = (
+            f' <span style="display:inline-block;background:#F3F4F6;'
+            f'color:#6B7280;font-size:11px;font-weight:600;padding:2px 7px;'
+            f'border-radius:8px;vertical-align:middle;">{seniority}</span>'
+        )
 
-    location_html = f'&nbsp;<span style="color:#7a8fa8;font-size:0.82rem;">{location}</span>' if location else ""
+    location_html = (
+        f'&nbsp;&bull;&nbsp;<span style="color:#9CA3AF;font-size:13px;">{location}</span>'
+        if location else ""
+    )
 
-    return f"""
-    <tr>
-      <td style="padding:14px 0;border-bottom:1px solid #eef2f7;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="padding-right:10px;">
-            <div style="font-weight:600;color:{DARK};font-size:0.95rem;margin-bottom:3px;line-height:1.3;">{title}{badge}</div>
-            <div style="color:#4a6080;font-size:0.85rem;">{company}{location_html}</div>
-          </td>
-          <td width="60" align="right" valign="middle">
-            <a href="{url}" style="display:inline-block;background:{ACCENT};color:#fff;text-decoration:none;padding:8px 14px;border-radius:6px;font-size:0.8rem;font-weight:700;white-space:nowrap;">Apply</a>
-          </td>
-        </tr></table>
-      </td>
-    </tr>"""
+    return (
+        f'<tr><td style="padding:13px 0;border-bottom:1px solid #F3F4F6;">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        f'<td style="padding-right:12px;">'
+        f'<div style="font-weight:600;color:#142A47;font-size:15px;margin-bottom:3px;line-height:1.35;">{title}{badge}</div>'
+        f'<div style="color:#6B7280;font-size:13px;">{company}{location_html}</div>'
+        f'</td>'
+        f'<td width="64" align="right" valign="middle">'
+        f'<a href="{url}" style="display:inline-block;background:#ED880D;color:#ffffff;'
+        f'text-decoration:none;padding:8px 14px;border-radius:6px;font-size:13px;'
+        f'font-weight:700;white-space:nowrap;">Apply</a>'
+        f'</td>'
+        f'</tr></table>'
+        f'</td></tr>'
+    )
 
 
 def category_section_html(category: str, jobs: list[dict]) -> str:
     rows = "".join(job_row_html(j) for j in jobs)
-    return f"""
-    <tr><td style="padding:20px 0 4px;">
-      <div style="font-size:0.7rem;font-weight:800;color:{ACCENT};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px;">{category}</div>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>{rows}</tbody></table>
-    </td></tr>"""
+    return (
+        f'<tr><td style="padding-top:20px;">'
+        f'<div style="font-size:11px;font-weight:800;color:#ED880D;'
+        f'text-transform:uppercase;letter-spacing:1.2px;margin-bottom:4px;">{category}</div>'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0">{rows}</table>'
+        f'</td></tr>'
+    )
+
+
+def build_jobs_table(selected: dict[str, list[dict]]) -> str:
+    """Wrap all category sections in a single table for mj-raw injection."""
+    sections = "".join(category_section_html(cat, jobs) for cat, jobs in selected.items())
+    return f'<table width="100%" cellpadding="0" cellspacing="0" border="0">{sections}</table>'
 
 
 def build_html(selected: dict[str, list[dict]], total_this_week: int) -> str:
-    week = week_label()
+    from mjml import mjml_to_html
+
+    week      = week_label()
     companies = len({j.get("company") for cat_jobs in selected.values() for j in cat_jobs if j.get("company")})
     total_shown = sum(len(v) for v in selected.values())
+    jobs_table  = build_jobs_table(selected)
 
-    category_sections = "".join(
-        category_section_html(cat, jobs) for cat, jobs in selected.items()
-    )
+    mjml_src = f"""
+<mjml>
+  <mj-head>
+    <mj-preview>Your weekly O&G digest — {total_shown} curated roles this week</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" />
+      <mj-section padding="0" background-color="#ffffff" />
+      <mj-column padding="0" />
+      <mj-text padding="0" font-size="14px" line-height="1.6" color="#142A47" />
+    </mj-attributes>
+  </mj-head>
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DracoHub Weekly Digest — {week}</title>
-</head>
-<body style="background:#f0f4f8;font-family:'Helvetica Neue',Arial,sans-serif;color:{DARK};margin:0;padding:0;">
+  <mj-body background-color="#F0F4F8">
 
-<table width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td align="center" style="padding:24px 8px;">
-
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <!-- Top spacer -->
+    <mj-section padding="24px 0 0" background-color="#F0F4F8" />
 
     <!-- Header -->
-    <tr><td style="background:{DARK};padding:28px 28px 22px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="font-size:1.25rem;font-weight:800;color:#fff;letter-spacing:-0.03em;">
-          Draco<span style="color:{ACCENT};">Hub</span>.
-        </td>
-      </tr></table>
-      <div style="display:inline-block;margin-top:10px;font-size:0.68rem;font-weight:700;color:{ACCENT};background:rgba(237,136,13,0.15);padding:4px 11px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;">{week}</div>
-      <div style="color:#fff;font-size:1.05rem;font-weight:600;margin-top:14px;margin-bottom:5px;">Your weekly O&amp;G digest is here.</div>
-      <div style="color:#8aa0b8;font-size:0.85rem;line-height:1.55;">We scanned every major Nigerian job platform so you don't have to. Here's what's worth your attention this week.</div>
-    </td></tr>
+    <mj-section padding="28px 28px 20px" border-radius="14px 14px 0 0">
+      <mj-column>
+        <mj-text font-size="22px" font-weight="800" color="#142A47" letter-spacing="-0.5px" padding-bottom="10px">
+          Draco<span style="color:#ED880D;">Hub</span>.
+        </mj-text>
+        <mj-text padding-bottom="14px">
+          <span style="display:inline-block;background:rgba(237,136,13,0.12);color:#ED880D;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">{week}</span>
+        </mj-text>
+        <mj-text font-size="18px" font-weight="700" color="#142A47" padding-bottom="6px">
+          Your weekly O&amp;G digest is here.
+        </mj-text>
+        <mj-text font-size="14px" color="#6B7280" line-height="1.6">
+          We scanned every major Nigerian job platform so you don't have to. Here's what's worth your attention this week.
+        </mj-text>
+      </mj-column>
+    </mj-section>
 
     <!-- Stats -->
-    <tr><td style="background:#f8fafc;padding:16px 0;border-bottom:1px solid #eef2f7;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td align="center" style="padding:4px 8px;">
-          <div style="font-size:1.5rem;font-weight:800;color:{ACCENT};">{total_shown}</div>
-          <div style="font-size:0.68rem;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">Curated Roles</div>
-        </td>
-        <td align="center" style="padding:4px 8px;border-left:1px solid #eef2f7;border-right:1px solid #eef2f7;">
-          <div style="font-size:1.5rem;font-weight:800;color:{DARK};">{total_this_week}</div>
-          <div style="font-size:0.68rem;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">New This Week</div>
-        </td>
-        <td align="center" style="padding:4px 8px;">
-          <div style="font-size:1.5rem;font-weight:800;color:{DARK};">{companies}</div>
-          <div style="font-size:0.68rem;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">Companies</div>
-        </td>
-      </tr></table>
-    </td></tr>
+    <mj-section background-color="#F9FAFB" border-top="2px solid #F3F4F6" border-bottom="2px solid #F3F4F6" padding="16px 0">
+      <mj-column padding="8px">
+        <mj-text align="center" font-size="26px" font-weight="800" color="#ED880D" padding-bottom="2px">{total_shown}</mj-text>
+        <mj-text align="center" font-size="10px" font-weight="700" color="#9CA3AF" letter-spacing="1px" padding-top="2px">CURATED ROLES</mj-text>
+      </mj-column>
+      <mj-column padding="8px" border-left="1px solid #E5E7EB" border-right="1px solid #E5E7EB">
+        <mj-text align="center" font-size="26px" font-weight="800" color="#142A47" padding-bottom="2px">{total_this_week}</mj-text>
+        <mj-text align="center" font-size="10px" font-weight="700" color="#9CA3AF" letter-spacing="1px" padding-top="2px">NEW THIS WEEK</mj-text>
+      </mj-column>
+      <mj-column padding="8px">
+        <mj-text align="center" font-size="26px" font-weight="800" color="#142A47" padding-bottom="2px">{companies}</mj-text>
+        <mj-text align="center" font-size="10px" font-weight="700" color="#9CA3AF" letter-spacing="1px" padding-top="2px">COMPANIES</mj-text>
+      </mj-column>
+    </mj-section>
 
-    <!-- Jobs -->
-    <tr><td style="padding:6px 24px 20px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>
-        {category_sections}
-      </tbody></table>
-    </td></tr>
+    <!-- Job listings -->
+    <mj-section padding="8px 24px 16px">
+      <mj-column>
+        <mj-raw>{jobs_table}</mj-raw>
+      </mj-column>
+    </mj-section>
 
     <!-- CTA -->
-    <tr><td style="background:#f8fafc;padding:28px 24px;text-align:center;border-top:1px solid #eef2f7;">
-      <div style="font-size:1rem;font-weight:700;color:{DARK};margin-bottom:8px;">See all {total_this_week} new listings on the board</div>
-      <div style="font-size:0.85rem;color:#7a8fa8;margin-bottom:18px;">Filter by category, location, or seniority.</div>
-      <a href="{SITE_URL}" style="display:inline-block;background:{ACCENT};color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-weight:700;font-size:0.95rem;">Browse All Jobs &#8594;</a>
-    </td></tr>
+    <mj-section background-color="#F9FAFB" border-top="2px solid #F3F4F6" padding="28px 24px">
+      <mj-column>
+        <mj-text align="center" font-size="16px" font-weight="700" color="#142A47" padding-bottom="6px">
+          See all {total_this_week} new listings on the board
+        </mj-text>
+        <mj-text align="center" font-size="13px" color="#6B7280" padding-bottom="20px">
+          Filter by category, location, or seniority.
+        </mj-text>
+        <mj-button background-color="#ED880D" color="#ffffff" border-radius="8px" font-size="15px" font-weight="700" href="{SITE_URL}" inner-padding="13px 28px" align="center">
+          Browse All Jobs →
+        </mj-button>
+      </mj-column>
+    </mj-section>
 
     <!-- Footer -->
-    <tr><td style="padding:20px 24px;text-align:center;border-top:1px solid #eef2f7;">
-      <div style="font-size:0.75rem;color:#a0b0c0;line-height:1.6;">
-        You're receiving this because you subscribed to DracoHub Weekly Digest.<br>
-        <a href="{{{{ subscriber.unsubscribe_url }}}}" style="color:#a0b0c0;">Unsubscribe</a>
-      </div>
-    </td></tr>
+    <mj-section border-top="2px solid #F3F4F6" padding="20px 24px" border-radius="0 0 14px 14px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#9CA3AF" line-height="1.7">
+          You're receiving this because you subscribed to DracoHub Weekly Digest.<br />
+          <a href="{{{{ subscriber.unsubscribe_url }}}}" style="color:#9CA3AF;text-decoration:underline;">Unsubscribe</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
 
-  </table>
-</td></tr>
-</table>
+    <!-- Bottom spacer -->
+    <mj-section padding="0 0 24px" background-color="#F0F4F8" />
 
-</body>
-</html>"""
+  </mj-body>
+</mjml>
+"""
+
+    result = mjml_to_html(mjml_src)
+    if result.errors:
+        logger.warning("MJML warnings: %s", result.errors)
+    logger.info("Email HTML compiled via MJML")
+    return result.html
 
 
 # ---------------------------------------------------------------------------
