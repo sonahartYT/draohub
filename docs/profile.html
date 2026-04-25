@@ -448,7 +448,7 @@
         const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
         const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
 
@@ -485,7 +485,7 @@
                 currentUser = session.user;
 
                 // Fetch subscriber row (null if user has no row yet — that's fine)
-                const { data: rows, error: fetchError } = await supabase
+                const { data: rows, error: fetchError } = await sb
                     .from('subscribers')
                     .select('*')
                     .eq('user_id', currentUser.id)
@@ -601,7 +601,7 @@
 
             // Upsert handles both existing subscribers (email/Paystack) and
             // new Google OAuth users who have no subscriber row yet.
-            const { error } = await supabase
+            const { error } = await sb
                 .from('subscribers')
                 .upsert(
                     { ...updates, user_id: currentUser.id, email: currentUser.email },
@@ -623,7 +623,7 @@
 
         // ── Sign out ─────────────────────────────────────────────
         async function signOut() {
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             window.location.href = 'index.html';
         }
 
@@ -636,14 +636,14 @@
         }
 
         // getSession() for normal loads; SIGNED_IN catches OAuth redirects
-        supabase.auth.getSession()
+        sb.auth.getSession()
             .then(({ data: { session } }) => bootProfile(session))
             .catch(err => {
                 console.error('getSession error:', err);
                 bootProfile(null);
             });
 
-        supabase.auth.onAuthStateChange((event, session) => {
+        sb.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN') bootProfile(session);
         });
 
