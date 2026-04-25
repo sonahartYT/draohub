@@ -134,23 +134,22 @@ def job_row_html(job: dict) -> str:
 
     badge = ""
     if employment and employment != "Full-time":
-        badge = f'<span style="display:inline-block;background:rgba(237,136,13,0.15);color:{ACCENT};font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;text-transform:uppercase;letter-spacing:0.04em;vertical-align:middle;">{employment}</span>'
+        badge = f'<span style="display:inline-block;background:rgba(237,136,13,0.15);color:{ACCENT};font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;text-transform:uppercase;vertical-align:middle;">{employment}</span>'
     elif seniority and seniority not in ("Mid-Level",):
-        badge = f'<span style="display:inline-block;background:#f0f4f8;color:#4a6080;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">{seniority}</span>'
+        badge = f'<span style="display:inline-block;background:#eef2f7;color:#4a6080;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">{seniority}</span>'
 
-    location_html = f'<span style="color:#7a8fa8;font-size:13px;">{location}</span>' if location else ""
+    location_html = f'&nbsp;<span style="color:#7a8fa8;font-size:13px;">{location}</span>' if location else ""
 
-    # Use a table instead of flexbox for reliable mobile rendering
     return f"""
     <tr>
       <td style="padding:14px 0;border-bottom:1px solid #eef2f7;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="padding-right:12px;">
-            <div style="font-weight:600;color:{DARK};font-size:15px;margin-bottom:3px;line-height:1.3;">{title}{badge}</div>
-            <div style="color:#4a6080;font-size:13px;">{company}&nbsp;{location_html}</div>
+          <td style="padding-right:10px;">
+            <div style="font-weight:600;color:#1a2635;font-size:15px;margin-bottom:4px;line-height:1.3;">{title}{badge}</div>
+            <div style="color:#4a6080;font-size:13px;">{company}{location_html}</div>
           </td>
-          <td width="64" align="right" valign="middle" style="white-space:nowrap;">
-            <a href="{url}" style="display:inline-block;background:{ACCENT};color:#fff;text-decoration:none;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;">Apply</a>
+          <td width="60" align="right" valign="middle">
+            <a href="{url}" style="display:inline-block;background:{ACCENT};color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;white-space:nowrap;">Apply</a>
           </td>
         </tr></table>
       </td>
@@ -160,11 +159,9 @@ def job_row_html(job: dict) -> str:
 def category_section_html(category: str, jobs: list[dict]) -> str:
     rows = "".join(job_row_html(j) for j in jobs)
     return f"""
-    <tr><td style="padding:20px 0 4px;">
-      <div style="font-size:11px;font-weight:800;color:{ACCENT};text-transform:uppercase;letter-spacing:0.12em;margin-bottom:2px;">{category}</div>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>
-        {rows}
-      </tbody></table>
+    <tr><td style="padding:18px 0 2px;">
+      <div style="font-size:11px;font-weight:800;color:{ACCENT};text-transform:uppercase;letter-spacing:0.1em;">{category}</div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>{rows}</tbody></table>
     </td></tr>"""
 
 
@@ -177,6 +174,8 @@ def build_html(selected: dict[str, list[dict]], total_this_week: int) -> str:
         category_section_html(cat, jobs) for cat, jobs in selected.items()
     )
 
+    # Only @media queries stay in <style> — everything else is inline
+    # Gmail on mobile strips <style> blocks, so all visual styles must be inline
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -184,89 +183,73 @@ def build_html(selected: dict[str, list[dict]], total_this_week: int) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DracoHub Weekly Digest — {week}</title>
 <style>
-  body {{ margin:0;padding:0;background:#f0f4f8;font-family:'Helvetica Neue',Arial,sans-serif; }}
-  .wrapper {{ padding:24px 12px; }}
-  .card {{ background:#ffffff;border-radius:14px;overflow:hidden;max-width:620px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.08); }}
-  .header {{ background:{DARK};padding:28px 28px 24px; }}
-  .header-logo {{ font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.03em; }}
-  .header-logo span {{ color:{ACCENT}; }}
-  .header-week {{ display:inline-block;font-size:11px;font-weight:700;color:{ACCENT};background:rgba(237,136,13,0.15);padding:4px 11px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;margin-top:10px; }}
-  .header-title {{ color:#ffffff;font-size:18px;font-weight:600;margin-top:18px;margin-bottom:5px; }}
-  .header-sub {{ color:#7a8fa8;font-size:14px;line-height:1.55; }}
-  .stats {{ background:#f8fafc;border-bottom:1px solid #eef2f7;padding:16px 28px; }}
-  .stat-num-accent {{ font-size:28px;font-weight:800;color:{ACCENT};line-height:1; }}
-  .stat-num {{ font-size:28px;font-weight:800;color:{DARK};line-height:1; }}
-  .stat-label {{ font-size:11px;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:3px;white-space:nowrap; }}
-  .jobs {{ padding:4px 28px 20px; }}
-  .cta {{ background:#f8fafc;padding:28px;text-align:center;border-top:1px solid #eef2f7; }}
-  .cta-btn {{ display:inline-block;background:{ACCENT};color:#fff;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:700;font-size:15px; }}
-  .footer {{ padding:20px 28px;text-align:center;border-top:1px solid #eef2f7; }}
-  @media only screen and (max-width:480px) {{
-    .wrapper {{ padding:12px 0 !important; }}
-    .card {{ border-radius:0 !important; }}
-    .header {{ padding:22px 18px 20px !important; }}
-    .header-title {{ font-size:16px !important; }}
-    .stats {{ padding:14px 18px !important; }}
-    .jobs {{ padding:4px 18px 16px !important; }}
-    .cta {{ padding:22px 18px !important; }}
-    .footer {{ padding:16px 18px !important; }}
-  }}
+@media only screen and (max-width:480px) {{
+  .mob-pad {{ padding-left:18px !important; padding-right:18px !important; }}
+  .mob-pad-hd {{ padding:22px 18px 20px !important; }}
+  .mob-fs-title {{ font-size:16px !important; }}
+}}
 </style>
 </head>
-<body>
-<div class="wrapper">
-<div class="card">
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Helvetica Neue',Arial,sans-serif;">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-logo">Draco<span>Hub</span>.</div>
-    <div class="header-week">{week}</div>
-    <div class="header-title">Your weekly O&amp;G digest is here.</div>
-    <div class="header-sub">We scanned every major Nigerian job platform so you don't have to. Here's what's worth your attention this week.</div>
-  </div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;">
+<tr><td align="center" style="padding:24px 12px;">
 
-  <!-- Stats -->
-  <div class="stats">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td align="center" width="33%">
-        <div class="stat-num-accent">{total_shown}</div>
-        <div class="stat-label">Curated Roles</div>
-      </td>
-      <td align="center" width="34%" style="border-left:1px solid #eef2f7;border-right:1px solid #eef2f7;">
-        <div class="stat-num">{total_this_week}</div>
-        <div class="stat-label">New This Week</div>
-      </td>
-      <td align="center" width="33%">
-        <div class="stat-num">{companies}</div>
-        <div class="stat-label">Companies</div>
-      </td>
-    </tr></table>
-  </div>
+  <!-- Outer card -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;background-color:#ffffff;border-radius:14px;overflow:hidden;">
 
-  <!-- Jobs -->
-  <div class="jobs">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>
-      {category_sections}
-    </tbody></table>
-  </div>
+    <!-- Header -->
+    <tr><td class="mob-pad-hd" style="background-color:#1a2635;padding:28px 32px 24px;">
+      <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.03em;">Draco<span style="color:{ACCENT};">Hub</span>.</div>
+      <div style="display:inline-block;font-size:11px;font-weight:700;color:{ACCENT};background-color:rgba(237,136,13,0.18);padding:4px 12px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;margin-top:10px;">{week}</div>
+      <div class="mob-fs-title" style="color:#ffffff;font-size:18px;font-weight:600;margin-top:16px;margin-bottom:5px;">Your weekly O&amp;G digest is here.</div>
+      <div style="color:#8aa0b8;font-size:14px;line-height:1.55;">We scanned every major Nigerian job platform so you don't have to. Here's what's worth your attention this week.</div>
+    </td></tr>
 
-  <!-- CTA -->
-  <div class="cta">
-    <div style="font-size:16px;font-weight:700;color:{DARK};margin-bottom:6px;">See all {total_this_week} new listings on the board</div>
-    <div style="font-size:13px;color:#7a8fa8;margin-bottom:18px;">Filter by category, location, or seniority.</div>
-    <a href="{SITE_URL}" class="cta-btn">Browse All Jobs &rarr;</a>
-  </div>
+    <!-- Stats -->
+    <tr><td style="background-color:#f8fafc;border-bottom:1px solid #eef2f7;padding:16px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td align="center" width="33%" style="padding:4px 8px;">
+          <div style="font-size:28px;font-weight:800;color:{ACCENT};line-height:1;">{total_shown}</div>
+          <div style="font-size:11px;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:3px;white-space:nowrap;">Curated Roles</div>
+        </td>
+        <td align="center" width="34%" style="padding:4px 8px;border-left:1px solid #eef2f7;border-right:1px solid #eef2f7;">
+          <div style="font-size:28px;font-weight:800;color:#1a2635;line-height:1;">{total_this_week}</div>
+          <div style="font-size:11px;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:3px;white-space:nowrap;">New This Week</div>
+        </td>
+        <td align="center" width="33%" style="padding:4px 8px;">
+          <div style="font-size:28px;font-weight:800;color:#1a2635;line-height:1;">{companies}</div>
+          <div style="font-size:11px;color:#7a8fa8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:3px;white-space:nowrap;">Companies</div>
+        </td>
+      </tr></table>
+    </td></tr>
 
-  <!-- Footer -->
-  <div class="footer">
-    <div style="font-size:12px;color:#a0b0c0;line-height:1.6;">
-      You're receiving this because you subscribed to DracoHub Weekly Digest.<br>
-      <a href="{{{{ subscriber.unsubscribe_url }}}}" style="color:#a0b0c0;">Unsubscribe</a>
-    </div>
-  </div>
+    <!-- Jobs -->
+    <tr><td class="mob-pad" style="padding:4px 32px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tbody>
+        {category_sections}
+      </tbody></table>
+    </td></tr>
 
-</div>
-</div>
+    <!-- CTA -->
+    <tr><td class="mob-pad" style="background-color:#f8fafc;padding:28px 32px;text-align:center;border-top:1px solid #eef2f7;">
+      <div style="font-size:16px;font-weight:700;color:#1a2635;margin-bottom:6px;">See all {total_this_week} new listings on the board</div>
+      <div style="font-size:13px;color:#7a8fa8;margin-bottom:18px;">Filter by category, location, or seniority.</div>
+      <a href="{SITE_URL}" style="display:inline-block;background-color:{ACCENT};color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:700;font-size:15px;">Browse All Jobs &#8594;</a>
+    </td></tr>
+
+    <!-- Footer -->
+    <tr><td class="mob-pad" style="padding:20px 32px;text-align:center;border-top:1px solid #eef2f7;">
+      <div style="font-size:12px;color:#a0b0c0;line-height:1.6;">
+        You're receiving this because you subscribed to DracoHub Weekly Digest.<br>
+        <a href="{{{{ subscriber.unsubscribe_url }}}}" style="color:#a0b0c0;text-decoration:underline;">Unsubscribe</a>
+      </div>
+    </td></tr>
+
+  </table>
+</td></tr>
+</table>
+
 </body>
 </html>"""
 
