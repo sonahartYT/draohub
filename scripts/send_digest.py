@@ -270,12 +270,14 @@ def create_and_send_broadcast(subject: str, html: str, dry_run: bool) -> bool:
         logger.info("[DRY RUN] Would send broadcast: %s", subject)
         return True
 
-    # 1. Create broadcast draft
+    # Create broadcast and schedule for immediate send via send_at
+    send_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
     payload = {
         "subject": subject,
         "content": html,
         "description": f"Auto-generated digest — {week_label()}",
         "public": False,
+        "send_at": send_at,
         "subscriber_filter": [
             {"all": [{"type": "tag", "ids": [int(KIT_DIGEST_TAG_ID)]}]}
         ],
@@ -291,20 +293,7 @@ def create_and_send_broadcast(subject: str, html: str, dry_run: bool) -> bool:
         return False
 
     broadcast_id = resp.json()["broadcast"]["id"]
-    logger.info("Created broadcast id=%s", broadcast_id)
-
-    # 2. Publish (send immediately)
-    pub = requests.post(
-        f"https://api.kit.com/v4/broadcasts/{broadcast_id}/publish",
-        headers=kit_headers(),
-        json={"send_at": None},  # null = send immediately
-        timeout=30,
-    )
-    if pub.status_code not in (200, 201):
-        logger.error("Failed to publish broadcast: %s %s", pub.status_code, pub.text[:300])
-        return False
-
-    logger.info("Broadcast published successfully.")
+    logger.info("Broadcast created and queued for send id=%s", broadcast_id)
     return True
 
 
