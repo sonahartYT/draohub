@@ -37,12 +37,13 @@ logger = logging.getLogger("send_digest")
 # Config
 # ---------------------------------------------------------------------------
 
-SUPABASE_URL      = os.getenv("SUPABASE_URL")
-SUPABASE_KEY      = os.getenv("SUPABASE_KEY")
-RESEND_API_KEY    = os.getenv("RESEND_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-FROM_EMAIL        = os.getenv("DIGEST_FROM_EMAIL", "DracoHub Digest <digest@dracohub.com>")
-SITE_URL          = "https://sonahartyt.github.io/dracohub/"
+SUPABASE_URL         = os.getenv("SUPABASE_URL")
+SUPABASE_KEY         = os.getenv("SUPABASE_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # bypasses RLS for server-side reads
+RESEND_API_KEY       = os.getenv("RESEND_API_KEY")
+ANTHROPIC_API_KEY    = os.getenv("ANTHROPIC_API_KEY")
+FROM_EMAIL           = os.getenv("DIGEST_FROM_EMAIL", "DracoHub Digest <digest@dracohub.com>")
+SITE_URL             = "https://sonahartyt.github.io/dracohub/"
 
 ACCENT = "#ED880D"
 DARK   = "#142A47"
@@ -96,11 +97,21 @@ def fetch_this_weeks_jobs() -> list[dict]:
     return jobs
 
 
+def service_headers() -> dict:
+    """Service role headers — bypasses RLS for server-side reads."""
+    key = SUPABASE_SERVICE_KEY or SUPABASE_KEY
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+
+
 def fetch_paid_subscribers() -> list[dict]:
     """Fetch all paid subscribers with their profile data."""
     resp = requests.get(
         f"{SUPABASE_URL}/rest/v1/subscribers",
-        headers=supabase_headers(),
+        headers=service_headers(),
         params={
             "select": (
                 "email,name,category,seniority,location_pref,work_type_pref,"

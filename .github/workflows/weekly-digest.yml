@@ -35,24 +35,27 @@ jobs:
 
       - name: Verify secrets
         run: |
-          if [ -z "$SUPABASE_URL" ];      then echo "ERROR: SUPABASE_URL not set"      && exit 1; fi
-          if [ -z "$SUPABASE_KEY" ];      then echo "ERROR: SUPABASE_KEY not set"      && exit 1; fi
-          if [ -z "$RESEND_API_KEY" ];    then echo "ERROR: RESEND_API_KEY not set"    && exit 1; fi
-          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "ERROR: ANTHROPIC_API_KEY not set" && exit 1; fi
+          if [ -z "$SUPABASE_URL" ];          then echo "ERROR: SUPABASE_URL not set"          && exit 1; fi
+          if [ -z "$SUPABASE_KEY" ];          then echo "ERROR: SUPABASE_KEY not set"          && exit 1; fi
+          if [ -z "$SUPABASE_SERVICE_KEY" ];  then echo "ERROR: SUPABASE_SERVICE_KEY not set"  && exit 1; fi
+          if [ -z "$RESEND_API_KEY" ];        then echo "ERROR: RESEND_API_KEY not set"        && exit 1; fi
+          if [ -z "$ANTHROPIC_API_KEY" ];     then echo "ERROR: ANTHROPIC_API_KEY not set"     && exit 1; fi
           echo "All secrets configured."
         env:
-          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY:      ${{ secrets.SUPABASE_KEY }}
-          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Send weekly digest
         env:
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY:        ${{ secrets.SUPABASE_KEY }}
-          RESEND_API_KEY:      ${{ secrets.RESEND_API_KEY }}
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
-          DIGEST_FROM_EMAIL:   ${{ secrets.DIGEST_FROM_EMAIL }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          DIGEST_FROM_EMAIL:    ${{ secrets.DIGEST_FROM_EMAIL }}
         run: |
           FLAGS=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ];  then FLAGS="--dry-run"; fi
