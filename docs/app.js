@@ -325,7 +325,11 @@ async function init() {
         }
     } catch (err) {
         console.error('Failed to load jobs:', err);
-        jobsGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Unable to load jobs. Please try again later.</p>';
+        jobsGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 24px;">
+            <p style="font-size:1rem;font-weight:600;margin-bottom:8px;">Unable to load jobs</p>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px;">${err.message || 'Unknown error'}</p>
+            <button onclick="location.reload()" class="btn btn-secondary" style="font-size:0.85rem;">Try again</button>
+        </div>`;
     }
 }
 
