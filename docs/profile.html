@@ -475,76 +475,82 @@
         })();
 
         // ── Load profile ─────────────────────────────────────────
-        async function loadProfile(sessionOverride) {
-            // sessionOverride is passed from onAuthStateChange (handles OAuth redirects).
-            // Fall back to getSession() for normal page loads.
-            let session = sessionOverride;
-            if (!session) {
-                const res = await supabase.auth.getSession();
-                session = res.data.session;
+        async function loadProfile(session) {
+            try {
+                if (!session) {
+                    window.location.href = 'login.html?next=profile.html';
+                    return;
+                }
+
+                currentUser = session.user;
+
+                // Fetch subscriber row (null if user has no row yet — that's fine)
+                const { data: rows, error: fetchError } = await supabase
+                    .from('subscribers')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .limit(1);
+
+                if (fetchError) console.warn('Subscriber fetch error:', fetchError.message);
+                const sub = rows?.[0] || null;
+
+                // Sidebar
+                const name = sub?.name || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+                const initials = name
+                    ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                    : (currentUser.email || '?')[0].toUpperCase();
+                document.getElementById('sidebarAvatar').textContent = initials;
+                document.getElementById('sidebarName').textContent = name || '—';
+                document.getElementById('sidebarEmail').textContent = currentUser.email || '';
+
+                // Subscription badge
+                const badgeEl = document.getElementById('sidebarSubBadge');
+                if (sub?.subscription_status === 'paid') {
+                    badgeEl.innerHTML = `<span class="profile-sub-badge paid">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Digest Active
+                    </span>`;
+                } else {
+                    badgeEl.innerHTML = `<span class="profile-sub-badge unpaid">No subscription</span>`;
+                    document.getElementById('noSubBanner').style.display = 'flex';
+                }
+
+                // Populate form fields from subscriber row
+                if (sub) {
+                    setVal('pName', sub.name);
+                    setVal('pPhone', sub.phone);
+                    setVal('pState', sub.state_of_origin);
+                    setVal('pGender', sub.gender);
+                    setVal('pEmploymentStatus', sub.employment_status);
+                    setVal('pJobHunting', sub.job_hunting_status);
+                    setVal('pCurrentRole', sub.current_job_role);
+                    setVal('pCurrentCompany', sub.current_company);
+                    setVal('pYearsExp', sub.years_experience);
+                    setVal('pWorkType', sub.work_type_pref);
+                    document.getElementById('pRelocation').checked = !!sub.open_to_relocation;
+                    setVal('pQualification', sub.highest_qualification);
+                    setVal('pBackground', sub.background);
+                    setVal('pInstitution', sub.institution);
+                    setVal('pGradYear', sub.graduation_year);
+                    setVal('pCategory', sub.category);
+                    setVal('pSeniority', sub.seniority);
+                    setVal('pLocation', sub.location_pref);
+                    setVal('pSalary', sub.salary_expectation);
+                    setVal('pLinkedin', sub.linkedin_url);
+                } else if (name) {
+                    // Pre-fill name from Google metadata if no subscriber row yet
+                    setVal('pName', name);
+                }
+
+                document.getElementById('stateLoading').style.display = 'none';
+                document.getElementById('stateProfile').style.display = 'block';
+
+            } catch (err) {
+                console.error('loadProfile error:', err);
+                document.getElementById('stateLoading').innerHTML =
+                    `<p style="color:#ef4444;">Failed to load profile: ${err.message}</p>
+                     <a href="login.html" style="color:var(--accent);">Return to login</a>`;
             }
-
-            if (!session) {
-                window.location.href = 'login.html?next=profile.html';
-                return;
-            }
-
-            currentUser = session.user;
-
-            // Fetch subscriber row linked to this user
-            const { data: rows, error } = await supabase
-                .from('subscribers')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .limit(1);
-
-            const sub = rows?.[0] || null;
-
-            // Update sidebar
-            const name = sub?.name || currentUser.user_metadata?.name || '';
-            const initials = name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : currentUser.email[0].toUpperCase();
-            document.getElementById('sidebarAvatar').textContent = initials;
-            document.getElementById('sidebarName').textContent = name || '—';
-            document.getElementById('sidebarEmail').textContent = currentUser.email;
-
-            // Subscription badge
-            const badgeEl = document.getElementById('sidebarSubBadge');
-            if (sub?.subscription_status === 'paid') {
-                badgeEl.innerHTML = `<span class="profile-sub-badge paid">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    Digest Active
-                </span>`;
-            } else {
-                badgeEl.innerHTML = `<span class="profile-sub-badge unpaid">No subscription</span>`;
-                document.getElementById('noSubBanner').style.display = 'flex';
-            }
-
-            // Populate form fields
-            if (sub) {
-                setVal('pName', sub.name);
-                setVal('pPhone', sub.phone);
-                setVal('pState', sub.state_of_origin);
-                setVal('pGender', sub.gender);
-                setVal('pEmploymentStatus', sub.employment_status);
-                setVal('pJobHunting', sub.job_hunting_status);
-                setVal('pCurrentRole', sub.current_job_role);
-                setVal('pCurrentCompany', sub.current_company);
-                setVal('pYearsExp', sub.years_experience);
-                setVal('pWorkType', sub.work_type_pref);
-                document.getElementById('pRelocation').checked = !!sub.open_to_relocation;
-                setVal('pQualification', sub.highest_qualification);
-                setVal('pBackground', sub.background);
-                setVal('pInstitution', sub.institution);
-                setVal('pGradYear', sub.graduation_year);
-                setVal('pCategory', sub.category);
-                setVal('pSeniority', sub.seniority);
-                setVal('pLocation', sub.location_pref);
-                setVal('pSalary', sub.salary_expectation);
-                setVal('pLinkedin', sub.linkedin_url);
-            }
-
-            document.getElementById('stateLoading').style.display = 'none';
-            document.getElementById('stateProfile').style.display = 'block';
         }
 
         function setVal(id, val) {
@@ -622,15 +628,23 @@
         }
 
         // ── Boot ─────────────────────────────────────────────────
-        // onAuthStateChange fires for both normal loads (INITIAL_SESSION)
-        // and OAuth redirects (SIGNED_IN), so it catches Google login correctly.
+        // Try getSession() immediately — works for normal loads and
+        // returning users whose session is in localStorage.
+        // Also listen for SIGNED_IN to catch Google OAuth redirects where
+        // the token exchange hasn't finished by the time getSession() runs.
         let profileLoaded = false;
+        function bootProfile(session) {
+            if (profileLoaded) return;
+            profileLoaded = true;
+            loadProfile(session);
+        }
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            bootProfile(session);
+        });
+
         supabase.auth.onAuthStateChange((event, session) => {
-            if (profileLoaded) return; // only load once
-            if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-                profileLoaded = true;
-                loadProfile(session);
-            }
+            if (event === 'SIGNED_IN') bootProfile(session);
         });
     </script>
 </body>
