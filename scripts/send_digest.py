@@ -212,18 +212,18 @@ def build_html(selected: dict[str, list[dict]], total_this_week: int) -> str:
     <mj-section padding="24px 0 0" background-color="#F0F4F8" />
 
     <!-- Header -->
-    <mj-section padding="28px 28px 20px" border-radius="14px 14px 0 0">
+    <mj-section background-color="#142A47" padding="28px 28px 24px" border-radius="14px 14px 0 0">
       <mj-column>
-        <mj-text font-size="22px" font-weight="800" color="#142A47" letter-spacing="-0.5px" padding-bottom="10px">
+        <mj-text font-size="22px" font-weight="800" color="#ffffff" letter-spacing="-0.5px" padding-bottom="10px">
           Draco<span style="color:#ED880D;">Hub</span>.
         </mj-text>
         <mj-text padding-bottom="14px">
-          <span style="display:inline-block;background:rgba(237,136,13,0.12);color:#ED880D;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">{week}</span>
+          <span style="display:inline-block;background:rgba(237,136,13,0.18);color:#ED880D;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">{week}</span>
         </mj-text>
-        <mj-text font-size="18px" font-weight="700" color="#142A47" padding-bottom="6px">
+        <mj-text font-size="18px" font-weight="700" color="#ffffff" padding-bottom="6px">
           Your weekly O&amp;G digest is here.
         </mj-text>
-        <mj-text font-size="14px" color="#6B7280" line-height="1.6">
+        <mj-text font-size="14px" color="#8AA0B8" line-height="1.6">
           We scanned every major Nigerian job platform so you don't have to. Here's what's worth your attention this week.
         </mj-text>
       </mj-column>
