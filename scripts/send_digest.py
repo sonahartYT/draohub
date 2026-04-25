@@ -277,7 +277,7 @@ def create_and_send_broadcast(subject: str, html: str, dry_run: bool) -> bool:
         "description": f"Auto-generated digest — {week_label()}",
         "public": False,
         "subscriber_filter": [
-            {"all": [{"type": "tag", "tag_id": int(KIT_DIGEST_TAG_ID)}]}
+            {"all": [{"type": "tag", "ids": [int(KIT_DIGEST_TAG_ID)]}]}
         ],
     }
     resp = requests.post(
