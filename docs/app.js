@@ -622,6 +622,91 @@ function clearCollection() {
 }
 
 // ============================================================
+// AUTH — NAV STATE (index.html only, non-blocking)
+// ============================================================
+let supabase = null;
+try {
+    if (window.supabase && window.supabase.createClient) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+} catch (e) {
+    console.warn('Supabase client init failed (auth nav will be skipped):', e);
+}
+
+function updateNavAuth(session) {
+    const navAuth = document.getElementById('navAuth');
+    const mobileNavAuth = document.getElementById('mobileNavAuth');
+    const navLoginLink = document.getElementById('navLoginLink');
+    if (!navAuth) return;
+
+    if (!session) {
+        navAuth.innerHTML = '';
+        if (navLoginLink) navLoginLink.style.display = '';
+        if (mobileNavAuth) {
+            mobileNavAuth.innerHTML = `<a href="login.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">Log In / My Profile</a>`;
+        }
+        return;
+    }
+
+    // Logged in — hide static Log In link, show avatar dropdown instead
+    if (navLoginLink) navLoginLink.style.display = 'none';
+    const user = session.user;
+    const name = user.user_metadata?.name || user.email || '';
+    const initials = name
+        ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : user.email[0].toUpperCase();
+
+    navAuth.innerHTML = `
+        <div class="nav-user-wrap" id="navUserWrap">
+            <button class="nav-user-btn" id="navUserBtn" aria-label="Account menu">
+                <span class="nav-user-avatar">${initials}</span>
+            </button>
+            <div class="nav-user-dropdown" id="navUserDropdown">
+                <div class="nav-user-info">
+                    <strong>${escapeHtml(name.split(' ')[0] || user.email)}</strong>
+                    <span>${escapeHtml(user.email)}</span>
+                </div>
+                <div class="nav-user-divider"></div>
+                <a href="profile.html" class="nav-user-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    My Profile
+                </a>
+                <button class="nav-user-item nav-user-signout" onclick="navSignOut()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sign Out
+                </button>
+            </div>
+        </div>`;
+
+    if (mobileNavAuth) {
+        mobileNavAuth.innerHTML = `<a href="profile.html" class="mobile-menu-link" style="color:var(--accent);font-weight:600;">My Profile</a>`;
+    }
+
+    document.getElementById('navUserBtn').addEventListener('click', e => {
+        e.stopPropagation();
+        document.getElementById('navUserDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => {
+        const dd = document.getElementById('navUserDropdown');
+        if (dd) dd.classList.remove('open');
+    }, { once: false });
+}
+
+async function navSignOut() {
+    if (supabase) await supabase.auth.signOut();
+    updateNavAuth(null);
+}
+
+function initNavAuth() {
+    if (!supabase) return;
+    // Run async — never blocks jobs from loading
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        updateNavAuth(session);
+    });
+    supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
+}
+
+// ============================================================
 // DARK MODE
 // ============================================================
 function initTheme() {
@@ -786,4 +871,5 @@ async function handleDigestSuccess(profile, reference) {
 // BOOT
 // ============================================================
 initTheme();
-init();
+init();        // jobs load immediately — never waits for auth
+initNavAuth(); // updates nav asynchronously after jobs are loading
