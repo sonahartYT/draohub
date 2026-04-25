@@ -113,8 +113,8 @@
 
             <!-- Tabs -->
             <div class="login-tabs">
-                <button class="login-tab active" id="tabSignIn" onclick="showTab('signin')">Sign In</button>
-                <button class="login-tab" id="tabSignUp" onclick="showTab('signup')">Create Account</button>
+                <button class="login-tab active" id="tabSignIn">Sign In</button>
+                <button class="login-tab" id="tabSignUp">Create Account</button>
             </div>
 
             <!-- Sign In Form -->
@@ -127,13 +127,13 @@
                     <label class="login-label" for="siPassword">Password</label>
                     <div class="login-pw-wrap">
                         <input type="password" id="siPassword" class="login-input" placeholder="Your password" autocomplete="current-password">
-                        <button type="button" class="login-pw-toggle" onclick="togglePw('siPassword', this)" aria-label="Show/hide password">
+                        <button type="button" class="login-pw-toggle" id="toggleSiPw" aria-label="Show/hide password">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
                     </div>
                 </div>
-                <span class="login-forgot" onclick="showForgotPassword()">Forgot your password?</span>
-                <button class="btn btn-primary login-submit" id="btnSignIn" onclick="signIn()">
+                <span class="login-forgot" id="forgotPwLink">Forgot your password?</span>
+                <button class="btn btn-primary login-submit" id="btnSignIn">
                     <span class="login-btn-text">Sign In</span>
                     <span class="login-spinner">Signing in…</span>
                 </button>
@@ -155,13 +155,13 @@
                     <label class="login-label" for="suPassword">Password</label>
                     <div class="login-pw-wrap">
                         <input type="password" id="suPassword" class="login-input" placeholder="Min. 8 characters" autocomplete="new-password">
-                        <button type="button" class="login-pw-toggle" onclick="togglePw('suPassword', this)" aria-label="Show/hide password">
+                        <button type="button" class="login-pw-toggle" id="toggleSuPw" aria-label="Show/hide password">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
                     </div>
                     <p class="login-hint">Already subscribed via email? Create an account with the same email to access your profile.</p>
                 </div>
-                <button class="btn btn-primary login-submit" id="btnSignUp" onclick="signUp()">
+                <button class="btn btn-primary login-submit" id="btnSignUp">
                     <span class="login-btn-text">Create Account</span>
                     <span class="login-spinner">Creating account…</span>
                 </button>
@@ -174,20 +174,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
-        // ── UI helpers — defined first, before any Supabase init.
-        // These must never crash, regardless of auth state.
+    (function () {
+        'use strict';
 
-        // Theme
-        (function() {
-            const stored = localStorage.getItem('dracohub-theme');
-            if (stored) document.documentElement.setAttribute('data-theme', stored);
-        })();
-        document.getElementById('themeToggle').addEventListener('click', () => {
+        // ── Theme
+        const stored = localStorage.getItem('dracohub-theme');
+        if (stored) document.documentElement.setAttribute('data-theme', stored);
+        document.getElementById('themeToggle').addEventListener('click', function () {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('dracohub-theme', next);
         });
 
+        // ── Helpers
         function showTab(tab) {
             document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
             document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
@@ -209,61 +208,51 @@
 
         function showError(elId, msg) {
             const el = document.getElementById(elId);
-            el.textContent = msg;
-            el.style.display = 'block';
+            el.textContent = msg; el.style.display = 'block';
         }
         function showSuccess(elId, html) {
             const el = document.getElementById(elId);
-            el.innerHTML = html;
-            el.style.display = 'block';
+            el.innerHTML = html; el.style.display = 'block';
         }
-        function clearMessages(...ids) {
-            ids.forEach(id => { document.getElementById(id).style.display = 'none'; });
+        function clearMessages() {
+            ['siError','siSuccess','suError','suSuccess'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
         }
-
         function redirectAfterLogin() {
-            const params = new URLSearchParams(window.location.search);
-            const next = params.get('next');
+            const next = new URLSearchParams(window.location.search).get('next');
             window.location.href = next || 'profile.html';
         }
 
-        // Allow Enter key to submit whichever form is active
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                if (document.getElementById('formSignIn').classList.contains('active')) signIn();
-                else signUp();
-            }
-        });
+        // ── Tab switching
+        document.getElementById('tabSignIn').addEventListener('click', function () { showTab('signin'); });
+        document.getElementById('tabSignUp').addEventListener('click', function () { showTab('signup'); });
 
-        // ── Supabase init — wrapped so a CDN hiccup can't kill the UI functions above
+        // ── Password toggles
+        document.getElementById('toggleSiPw').addEventListener('click', function () { togglePw('siPassword'); });
+        document.getElementById('toggleSuPw').addEventListener('click', function () { togglePw('suPassword'); });
+
+        // ── Supabase init
         const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
 
-        let supabase = null;
+        let sb = null;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
             console.error('Supabase init failed:', e);
-            // Show a gentle warning — buttons still work, auth calls will show a friendly error
-            document.querySelectorAll('.login-form.active .login-error').forEach(el => {
-                el.textContent = 'Auth service failed to load. Please refresh the page.';
-                el.style.display = 'block';
-            });
         }
 
-        // Redirect if already signed in
-        if (supabase) {
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                if (session) redirectAfterLogin();
+        if (sb) {
+            sb.auth.getSession().then(function (res) {
+                if (res.data.session) redirectAfterLogin();
             });
-
-            // Handle password reset redirect (Supabase puts token in URL hash)
-            supabase.auth.onAuthStateChange((event) => {
+            sb.auth.onAuthStateChange(function (event) {
                 if (event === 'PASSWORD_RECOVERY') {
                     const newPass = prompt('Enter your new password (min. 8 characters):');
                     if (newPass && newPass.length >= 8) {
-                        supabase.auth.updateUser({ password: newPass }).then(({ error }) => {
-                            if (error) alert('Error: ' + error.message);
+                        sb.auth.updateUser({ password: newPass }).then(function (res) {
+                            if (res.error) alert('Error: ' + res.error.message);
                             else { alert('Password updated! You are now signed in.'); redirectAfterLogin(); }
                         });
                     }
@@ -271,78 +260,64 @@
             });
         }
 
-        // ── Auth actions
-
-        async function signIn() {
-            clearMessages('siError', 'siSuccess');
-            if (!supabase) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
-
+        // ── Sign In
+        document.getElementById('btnSignIn').addEventListener('click', async function () {
+            clearMessages();
+            if (!sb) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
             const email    = document.getElementById('siEmail').value.trim();
             const password = document.getElementById('siPassword').value;
             if (!email || !password) { showError('siError', 'Please enter your email and password.'); return; }
-
             setLoading('btnSignIn', true);
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
             setLoading('btnSignIn', false);
-
-            if (error) {
-                showError('siError', error.message === 'Invalid login credentials'
-                    ? 'Email or password is incorrect. Try again.' : error.message);
-                return;
-            }
-
-            if (data.user) await supabase.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
-
+            if (error) { showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
+            if (data.user) await sb.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
             showSuccess('siSuccess', 'Signed in! Redirecting…');
             setTimeout(redirectAfterLogin, 800);
-        }
+        });
 
-        async function signUp() {
-            clearMessages('suError', 'suSuccess');
-            if (!supabase) { showError('suError', 'Auth service unavailable. Please refresh.'); return; }
-
+        // ── Create Account
+        document.getElementById('btnSignUp').addEventListener('click', async function () {
+            clearMessages();
+            if (!sb) { showError('suError', 'Auth service unavailable. Please refresh.'); return; }
             const name     = document.getElementById('suName').value.trim();
             const email    = document.getElementById('suEmail').value.trim();
             const password = document.getElementById('suPassword').value;
-
             if (!email || !password) { showError('suError', 'Please enter your email and a password.'); return; }
             if (password.length < 8)  { showError('suError', 'Password must be at least 8 characters.'); return; }
-
             setLoading('btnSignUp', true);
-            const { data, error } = await supabase.auth.signUp({
-                email, password, options: { data: { name } }
-            });
+            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name } } });
             setLoading('btnSignUp', false);
-
-            if (error) {
-                showError('suError', error.message.includes('already registered')
-                    ? 'An account with this email already exists. Try signing in instead.' : error.message);
-                return;
-            }
-
-            if (!data.session) {
-                showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.');
-                return;
-            }
-
-            if (data.user) await supabase.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
+            if (error) { showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
+            if (!data.session) { showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.'); return; }
+            if (data.user) await sb.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
             showSuccess('suSuccess', 'Account created! Redirecting to your profile…');
             setTimeout(redirectAfterLogin, 800);
-        }
+        });
 
-        async function showForgotPassword() {
-            clearMessages('siError', 'siSuccess');
-            if (!supabase) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
-
+        // ── Forgot Password
+        document.getElementById('forgotPwLink').addEventListener('click', async function () {
+            clearMessages();
+            if (!sb) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
             const email = document.getElementById('siEmail').value.trim();
             if (!email) { showError('siError', 'Enter your email address above first, then click "Forgot your password?"'); return; }
-
-            const redirectTo = window.location.href.split('?')[0]; // back to login.html (no query string)
-            const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-
+            const redirectTo = window.location.href.split('?')[0];
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
             if (error) showError('siError', error.message);
             else showSuccess('siSuccess', 'Password reset email sent — check your inbox.');
-        }
+        });
+
+        // ── Enter key
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            if (document.getElementById('formSignIn').classList.contains('active')) {
+                document.getElementById('btnSignIn').click();
+            } else {
+                document.getElementById('btnSignUp').click();
+            }
+        });
+
+    }());
     </script>
 </body>
 </html>
