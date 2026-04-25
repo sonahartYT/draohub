@@ -4,3 +4,4 @@ python-jobspy
 beautifulsoup4
 anthropic
 mjml
+resend

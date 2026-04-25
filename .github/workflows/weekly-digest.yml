@@ -7,18 +7,18 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run (build digest but do not send)'
+        description: 'Dry run (build emails but do not send)'
         type: boolean
         default: false
       preview:
-        description: 'Write digest_preview.html as artifact only'
+        description: 'Write preview HTMLs as artifacts only'
         type: boolean
         default: false
 
 jobs:
   send-digest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -35,33 +35,35 @@ jobs:
 
       - name: Verify secrets
         run: |
-          if [ -z "$SUPABASE_URL" ]; then echo "ERROR: SUPABASE_URL not set" && exit 1; fi
-          if [ -z "$SUPABASE_KEY" ]; then echo "ERROR: SUPABASE_KEY not set" && exit 1; fi
-          if [ -z "$KIT_API_KEY" ]; then echo "ERROR: KIT_API_KEY not set" && exit 1; fi
-          if [ -z "$KIT_DIGEST_TAG_ID" ]; then echo "ERROR: KIT_DIGEST_TAG_ID not set" && exit 1; fi
+          if [ -z "$SUPABASE_URL" ];      then echo "ERROR: SUPABASE_URL not set"      && exit 1; fi
+          if [ -z "$SUPABASE_KEY" ];      then echo "ERROR: SUPABASE_KEY not set"      && exit 1; fi
+          if [ -z "$RESEND_API_KEY" ];    then echo "ERROR: RESEND_API_KEY not set"    && exit 1; fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "ERROR: ANTHROPIC_API_KEY not set" && exit 1; fi
           echo "All secrets configured."
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
-          KIT_DIGEST_TAG_ID: ${{ secrets.KIT_DIGEST_TAG_ID }}
+          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:      ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Send weekly digest
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
-          KIT_DIGEST_TAG_ID: ${{ secrets.KIT_DIGEST_TAG_ID }}
+          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:      ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           FLAGS=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAGS="--dry-run"; fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ];  then FLAGS="--dry-run"; fi
           if [ "${{ github.event.inputs.preview }}" = "true" ]; then FLAGS="--preview"; fi
           python scripts/send_digest.py $FLAGS
 
-      - name: Upload preview as artifact
+      - name: Upload previews as artifacts
         if: ${{ github.event.inputs.preview == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: digest-preview-${{ github.run_id }}
-          path: scripts/digest_preview.html
+          name: digest-previews-${{ github.run_id }}
+          path: |
+            scripts/digest_preview_generic.html
+            scripts/digest_preview_personalised.html
           retention-days: 7
