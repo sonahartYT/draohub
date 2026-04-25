@@ -475,11 +475,16 @@
         })();
 
         // ── Load profile ─────────────────────────────────────────
-        async function loadProfile() {
-            const { data: { session } } = await supabase.auth.getSession();
+        async function loadProfile(sessionOverride) {
+            // sessionOverride is passed from onAuthStateChange (handles OAuth redirects).
+            // Fall back to getSession() for normal page loads.
+            let session = sessionOverride;
+            if (!session) {
+                const res = await supabase.auth.getSession();
+                session = res.data.session;
+            }
 
             if (!session) {
-                // Not logged in — redirect to login page
                 window.location.href = 'login.html?next=profile.html';
                 return;
             }
@@ -588,10 +593,14 @@
                 document.getElementById('sidebarName').textContent = updates.name;
             }
 
+            // Upsert handles both existing subscribers (email/Paystack) and
+            // new Google OAuth users who have no subscriber row yet.
             const { error } = await supabase
                 .from('subscribers')
-                .update(updates)
-                .eq('user_id', currentUser.id);
+                .upsert(
+                    { ...updates, user_id: currentUser.id, email: currentUser.email },
+                    { onConflict: 'user_id', ignoreDuplicates: false }
+                );
 
             btn.disabled = false;
             document.getElementById('saveBtnText').style.display = 'inline';
@@ -613,7 +622,16 @@
         }
 
         // ── Boot ─────────────────────────────────────────────────
-        loadProfile();
+        // onAuthStateChange fires for both normal loads (INITIAL_SESSION)
+        // and OAuth redirects (SIGNED_IN), so it catches Google login correctly.
+        let profileLoaded = false;
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (profileLoaded) return; // only load once
+            if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+                profileLoaded = true;
+                loadProfile(session);
+            }
+        });
     </script>
 </body>
 </html>
