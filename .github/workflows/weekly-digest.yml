@@ -48,10 +48,11 @@ jobs:
 
       - name: Send weekly digest
         env:
-          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY:      ${{ secrets.SUPABASE_KEY }}
-          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:        ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY:      ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          DIGEST_FROM_EMAIL:   ${{ secrets.DIGEST_FROM_EMAIL }}
         run: |
           FLAGS=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ];  then FLAGS="--dry-run"; fi
