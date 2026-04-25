@@ -628,10 +628,6 @@
         }
 
         // ── Boot ─────────────────────────────────────────────────
-        // Try getSession() immediately — works for normal loads and
-        // returning users whose session is in localStorage.
-        // Also listen for SIGNED_IN to catch Google OAuth redirects where
-        // the token exchange hasn't finished by the time getSession() runs.
         let profileLoaded = false;
         function bootProfile(session) {
             if (profileLoaded) return;
@@ -639,13 +635,28 @@
             loadProfile(session);
         }
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            bootProfile(session);
-        });
+        // getSession() for normal loads; SIGNED_IN catches OAuth redirects
+        supabase.auth.getSession()
+            .then(({ data: { session } }) => bootProfile(session))
+            .catch(err => {
+                console.error('getSession error:', err);
+                bootProfile(null);
+            });
 
         supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN') bootProfile(session);
         });
+
+        // Hard timeout — if nothing resolves in 8s, show an error
+        setTimeout(() => {
+            if (!profileLoaded) {
+                profileLoaded = true;
+                document.getElementById('stateLoading').innerHTML =
+                    '<p style="color:#ef4444;font-weight:600;">Timed out loading profile.</p>' +
+                    '<p style="color:var(--text-muted);font-size:0.85rem;margin:8px 0 16px;">This usually means the auth session did not load correctly.</p>' +
+                    '<a href="login.html" class="btn btn-primary" style="display:inline-block;">Back to Login</a>';
+            }
+        }, 8000);
     </script>
 </body>
 </html>
