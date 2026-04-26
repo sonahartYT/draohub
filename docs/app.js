@@ -8,7 +8,7 @@
 // --- Configuration ---
 const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
-const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE';
+const PAYSTACK_PUBLIC_KEY = 'pk_test_d2c67160d7ed8225a3f83c9528c0c72afbb5022a';
 const PAYSTACK_PLAN = 'PLN_gvf9n5tp4dbxslv';
 
 const PAGE_SIZE = 12;

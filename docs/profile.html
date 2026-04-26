@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .profile-main { flex: 1; padding: 48px 0 80px; }
@@ -198,8 +199,8 @@
 
                         <!-- No subscription notice -->
                         <div id="noSubBanner" class="profile-no-sub" style="display:none;">
-                            <p><strong>No active subscription</strong>Subscribe to the Weekly Digest to get curated O&amp;G jobs every Monday.</p>
-                            <a href="index.html#subscribe" class="btn btn-primary" style="font-size:0.85rem;padding:9px 18px;">Subscribe — ₦3,000/mo</a>
+                            <p><strong>No active subscription</strong>Subscribe to get personalised O&amp;G jobs matched to your profile every Monday.</p>
+                            <button id="subscribeBtn" class="btn btn-primary" style="font-size:0.85rem;padding:9px 18px;">Subscribe — ₦3,000/mo</button>
                         </div>
 
                         <!-- ─── PERSONAL ─── -->
@@ -626,6 +627,56 @@
             await sb.auth.signOut();
             window.location.href = 'index.html';
         }
+
+        // ── Paystack payment ─────────────────────────────────────
+        function openPaystack() {
+            if (!currentUser) return;
+            const btn = document.getElementById('subscribeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
+            const handler = PaystackPop.setup({
+                key: 'pk_test_d2c67160d7ed8225a3f83c9528c0c72afbb5022a',
+                email: currentUser.email,
+                amount: 300000, // ₦3,000 in kobo
+                currency: 'NGN',
+                ref: 'draco_' + currentUser.id.slice(0, 8) + '_' + Date.now(),
+                metadata: { user_id: currentUser.id },
+                callback: async function(response) {
+                    btn.textContent = 'Verifying...';
+                    // Optimistically update UI while webhook processes
+                    try {
+                        const { error } = await sb
+                            .from('subscribers')
+                            .upsert(
+                                { user_id: currentUser.id, email: currentUser.email, subscription_status: 'paid', paystack_ref: response.reference },
+                                { onConflict: 'user_id', ignoreDuplicates: false }
+                            );
+                        if (!error) {
+                            document.getElementById('noSubBanner').style.display = 'none';
+                            document.getElementById('sidebarSubBadge').innerHTML = `
+                                <span class="profile-sub-badge paid">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Digest Active
+                                </span>`;
+                            alert('🎉 Subscription activated! You\'ll receive your first digest next Monday.');
+                        }
+                    } catch(e) {
+                        console.error('Post-payment update error:', e);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = 'Subscribe — ₦3,000/mo';
+                },
+                onClose: function() {
+                    btn.disabled = false;
+                    btn.textContent = 'Subscribe — ₦3,000/mo';
+                }
+            });
+            handler.openIframe();
+        }
+
+        // Wire up subscribe button once DOM is ready
+        document.getElementById('subscribeBtn').addEventListener('click', openPaystack);
 
         // ── Boot ─────────────────────────────────────────────────
         let profileLoaded = false;
