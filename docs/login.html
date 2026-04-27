@@ -286,7 +286,7 @@
             sb.auth.getSession().then(function (res) {
                 if (res.data.session) redirectAfterLogin();
             });
-            sb.auth.onAuthStateChange(function (event) {
+            sb.auth.onAuthStateChange(function (event, session) {
                 if (event === 'PASSWORD_RECOVERY') {
                     const newPass = prompt('Enter your new password (min. 8 characters):');
                     if (newPass && newPass.length >= 8) {
@@ -295,6 +295,11 @@
                             else { alert('Password updated! You are now signed in.'); redirectAfterLogin(); }
                         });
                     }
+                } else if (event === 'SIGNED_IN' && session) {
+                    // Fired after email confirmation link is clicked — redirect to profile
+                    sb.rpc('claim_subscriber', { p_user_id: session.user.id }).catch(function () {});
+                    showSuccess('siSuccess', 'Email verified! Redirecting to your profile…');
+                    setTimeout(redirectAfterLogin, 1000);
                 }
             });
         }
@@ -325,7 +330,8 @@
             if (!email || !password) { showError('suError', 'Please enter your email and a password.'); return; }
             if (password.length < 8)  { showError('suError', 'Password must be at least 8 characters.'); return; }
             setLoading('btnSignUp', true);
-            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name } } });
+            const emailRedirectTo = window.location.origin + window.location.pathname;
+            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo } });
             setLoading('btnSignUp', false);
             if (error) { showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
             if (!data.session) { showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.'); return; }

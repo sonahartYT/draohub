@@ -245,11 +245,31 @@ def build_personalised_jobs_table(ranked_jobs: list[dict]) -> str:
 # Generic digest HTML (MJML)
 # ---------------------------------------------------------------------------
 
-def build_generic_html(selected: dict[str, list[dict]], total_this_week: int) -> str:
+def build_generic_html(selected: dict[str, list[dict]], total_this_week: int, is_paid_incomplete: bool = False) -> str:
     week        = week_label()
     companies   = len({j.get("company") for v in selected.values() for j in v if j.get("company")})
     total_shown = sum(len(v) for v in selected.values())
     jobs_table  = build_jobs_table(selected)
+
+    # Optional nudge for paid subscribers with incomplete profiles
+    if is_paid_incomplete:
+        profile_nudge = (
+            '<mj-section background-color="#FFF8EE" border-top="2px solid #FDEBC2" padding="24px 28px">'
+            '<mj-column>'
+            '<mj-text font-size="16px" font-weight="700" color="#142A47" padding-bottom="6px">'
+            '&#9889; Get a personalised digest next week'
+            '</mj-text>'
+            '<mj-text font-size="13px" color="#6B7280" line-height="1.65" padding-bottom="16px">'
+            "You're receiving the general digest right now. Complete your profile — job category, seniority, and location — and our AI will hand-pick the most relevant roles for you each week."
+            '</mj-text>'
+            f'<mj-button background-color="#142A47" color="#ffffff" border-radius="8px" font-size="14px" font-weight="700" href="{SITE_URL}profile.html" inner-padding="11px 24px" align="left">'
+            'Complete My Profile &rarr;'
+            '</mj-button>'
+            '</mj-column>'
+            '</mj-section>'
+        )
+    else:
+        profile_nudge = ""
 
     mjml_src = f"""
 <mjml>
@@ -312,6 +332,7 @@ def build_generic_html(selected: dict[str, list[dict]], total_this_week: int) ->
         </mj-button>
       </mj-column>
     </mj-section>
+    {profile_nudge}
     <mj-section border-top="2px solid #F3F4F6" padding="20px 24px" border-radius="0 0 14px 14px">
       <mj-column>
         <mj-text align="center" font-size="12px" color="#9CA3AF" line-height="1.7">
@@ -669,7 +690,7 @@ def main():
 
     # 3. Preview mode — write both templates as artifacts
     if args.preview:
-        generic_html = build_generic_html(selected_generic, len(all_jobs))
+        generic_html = build_generic_html(selected_generic, len(all_jobs), is_paid_incomplete=True)
         out_generic = os.path.join(os.path.dirname(__file__), "digest_preview_generic.html")
         with open(out_generic, "w") as f:
             f.write(generic_html)
@@ -722,8 +743,8 @@ def main():
                 subject  = f"Your {len(ranked)} matched O&G roles this week — DracoHub"
                 label    = "personalised"
             else:
-                # Generic fallback
-                html    = build_generic_html(selected_generic, len(all_jobs))
+                # Generic fallback — with nudge for paid subscribers who haven't completed their profile
+                html    = build_generic_html(selected_generic, len(all_jobs), is_paid_incomplete=True)
                 subject = generic_subject
                 label   = "generic (incomplete profile)"
 
