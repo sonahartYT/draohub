@@ -45,6 +45,9 @@ def _normalise_date(raw: str | None) -> str | None:
 BASE_URL = "https://www.myjobmag.com/search/jobs"
 MAX_PAGES = 3
 DELAY_SECONDS = 2
+DETAIL_DELAY = 1          # seconds between detail-page fetches
+MAX_DETAIL_FETCHES = 40   # cap per scraper run to keep CI within time budget
+SHORT_DESC_THRESHOLD = 250  # chars; below this we try the detail page
 
 SEARCH_TERMS = [
     "oil and gas",
@@ -66,6 +69,23 @@ HEADERS = {
     ),
     "Accept-Language": "en-US,en;q=0.9",
 }
+
+
+def _fetch_full_description(url: str) -> str | None:
+    """
+    Fetch the job detail page and extract the full description from div.job-details.
+    Returns the full text, or None if the fetch/parse fails.
+    """
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=20)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        el = soup.find("div", class_="job-details")
+        if el:
+            return el.get_text(separator="\n", strip=True) or None
+    except Exception as exc:
+        logger.debug("myjobmag detail fetch failed [%s]: %s", url, exc)
+    return None
 
 
 def _parse_card(card) -> dict:
@@ -185,7 +205,27 @@ def run() -> tuple[list[dict], list[str]]:
             time.sleep(DELAY_SECONDS)
 
     logger.info(
-        "myjobmag_scraper: finished — %d jobs collected, %d failed terms",
+        "myjobmag_scraper: finished search phase — %d jobs collected, %d failed terms",
         len(all_jobs), len(failed_terms),
     )
+
+    # ── Detail-page enrichment ────────────────────────────────────────────────
+    # For jobs with short/missing descriptions, visit the detail page to get
+    # the full text.  Capped at MAX_DETAIL_FETCHES to keep CI time bounded.
+    needs_detail = [
+        j for j in all_jobs
+        if j.get("apply_url") and len(j.get("description") or "") < SHORT_DESC_THRESHOLD
+    ]
+    to_fetch = needs_detail[:MAX_DETAIL_FETCHES]
+    if to_fetch:
+        logger.info("myjobmag_scraper: enriching %d short-desc jobs with detail pages", len(to_fetch))
+        enriched = 0
+        for job in to_fetch:
+            full = _fetch_full_description(job["apply_url"])
+            if full and len(full) > len(job.get("description") or ""):
+                job["description"] = full
+                enriched += 1
+            time.sleep(DETAIL_DELAY)
+        logger.info("myjobmag_scraper: enriched %d/%d jobs", enriched, len(to_fetch))
+
     return all_jobs, failed_terms
