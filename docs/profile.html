@@ -139,6 +139,15 @@
         }
         .profile-no-sub p { font-size: 0.88rem; color: var(--text); margin: 0; }
         .profile-no-sub p strong { display: block; margin-bottom: 2px; }
+
+        /* Profile completeness */
+        .profile-completeness { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .profile-completeness-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .profile-completeness-header span:first-child { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .profile-completeness-pct { font-size: 0.85rem; font-weight: 700; color: var(--accent); }
+        .profile-completeness-track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+        .profile-completeness-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease, background 0.3s; }
+        .profile-completeness-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -175,6 +184,16 @@
                             <div class="profile-user-name" id="sidebarName">—</div>
                             <div class="profile-user-email" id="sidebarEmail">—</div>
                             <div id="sidebarSubBadge"></div>
+                            <div class="profile-completeness">
+                                <div class="profile-completeness-header">
+                                    <span>Profile strength</span>
+                                    <span class="profile-completeness-pct" id="completenessPct">0%</span>
+                                </div>
+                                <div class="profile-completeness-track">
+                                    <div class="profile-completeness-fill" id="completenessFill" style="width:0%"></div>
+                                </div>
+                                <p class="profile-completeness-hint" id="completenessHint">Fill in your profile to get personalised digests.</p>
+                            </div>
                         </div>
 
                         <nav class="profile-nav">
@@ -363,6 +382,23 @@
                             </div>
                         </div>
 
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pNYSC">NYSC Status</label>
+                                <select id="pNYSC" class="profile-input">
+                                    <option value="">Select status</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Exempted">Exempted</option>
+                                    <option value="Not Applicable">Not Applicable</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pCertifications">Professional Certifications <span>(optional)</span></label>
+                                <input type="text" id="pCertifications" class="profile-input" placeholder="e.g. NEBOSH, COREN, PMP, SPE">
+                            </div>
+                        </div>
+
                         <!-- ─── JOB PREFERENCES ─── -->
                         <div class="profile-section-title">Job Preferences</div>
                         <div class="profile-row triple">
@@ -422,6 +458,59 @@
                                 <label class="profile-label" for="pLinkedin">LinkedIn Profile URL <span>(optional)</span></label>
                                 <input type="url" id="pLinkedin" class="profile-input" placeholder="https://linkedin.com/in/yourname">
                             </div>
+                        </div>
+
+                        <div class="profile-row triple">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pSectorPref">Sector Preference</label>
+                                <select id="pSectorPref" class="profile-input">
+                                    <option value="">Any sector</option>
+                                    <option value="Upstream">Upstream</option>
+                                    <option value="Midstream">Midstream</option>
+                                    <option value="Downstream">Downstream</option>
+                                    <option value="Oilfield Services">Oilfield Services</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pCompanyType">Company Type</label>
+                                <select id="pCompanyType" class="profile-input">
+                                    <option value="">Any type</option>
+                                    <option value="IOC">IOC (Shell, Total, etc.)</option>
+                                    <option value="NOC">NOC (NNPC, etc.)</option>
+                                    <option value="Independent">Independent</option>
+                                    <option value="OFS">Oilfield Services</option>
+                                </select>
+                            </div>
+                            <div class="profile-field">
+                                <label class="profile-label" for="pContractType">Contract Type</label>
+                                <select id="pContractType" class="profile-input">
+                                    <option value="">Either</option>
+                                    <option value="Permanent">Permanent / Staff</option>
+                                    <option value="Contract">Contract</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-row">
+                            <div class="profile-field">
+                                <label class="profile-label" for="pNoticePeriod">Notice Period / Availability</label>
+                                <select id="pNoticePeriod" class="profile-input">
+                                    <option value="">Not specified</option>
+                                    <option value="Immediately">Immediately available</option>
+                                    <option value="1 month">1 month</option>
+                                    <option value="2 months">2 months</option>
+                                    <option value="3 months+">3 months or more</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-toggle-row">
+                            <div class="profile-toggle-label">
+                                Open to roles outside Nigeria?
+                                <small>Ghana, Cameroon, Gabon and other African O&amp;G markets</small>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="pWillingAbroad">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
 
                         <!-- ─── ACTIONS ─── -->
@@ -538,6 +627,13 @@
                     setVal('pLocation', sub.location_pref);
                     setVal('pSalary', sub.salary_expectation);
                     setVal('pLinkedin', sub.linkedin_url);
+                    setVal('pNYSC', sub.nysc_status);
+                    setVal('pCertifications', sub.certifications);
+                    setVal('pSectorPref', sub.sector_pref);
+                    setVal('pCompanyType', sub.company_type_pref);
+                    setVal('pContractType', sub.contract_type_pref);
+                    setVal('pNoticePeriod', sub.notice_period);
+                    document.getElementById('pWillingAbroad').checked = !!sub.willing_abroad;
                 } else if (name) {
                     // Pre-fill name from Google metadata if no subscriber row yet
                     setVal('pName', name);
@@ -545,6 +641,7 @@
 
                 document.getElementById('stateLoading').style.display = 'none';
                 document.getElementById('stateProfile').style.display = 'block';
+                updateCompleteness();
 
             } catch (err) {
                 console.error('loadProfile error:', err);
@@ -557,6 +654,55 @@
         function setVal(id, val) {
             const el = document.getElementById(id);
             if (el && val != null) el.value = val;
+        }
+
+        // ── Profile completeness ─────────────────────────────────────────
+        function updateCompleteness() {
+            const FIELDS = [
+                { id: 'pCategory',      weight: 12, label: 'job category' },
+                { id: 'pSeniority',     weight: 10, label: 'seniority level' },
+                { id: 'pName',          weight: 8,  label: 'your full name' },
+                { id: 'pYearsExp',      weight: 8,  label: 'years of experience' },
+                { id: 'pLocation',      weight: 8,  label: 'preferred location' },
+                { id: 'pSectorPref',    weight: 8,  label: 'sector preference' },
+                { id: 'pCertifications',weight: 8,  label: 'professional certifications' },
+                { id: 'pBackground',    weight: 6,  label: 'degree / field' },
+                { id: 'pEmploymentStatus', weight: 6, label: 'employment status' },
+                { id: 'pWorkType',      weight: 6,  label: 'work type preference' },
+                { id: 'pCompanyType',   weight: 6,  label: 'company type preference' },
+                { id: 'pContractType',  weight: 6,  label: 'contract type preference' },
+                { id: 'pNoticePeriod',  weight: 6,  label: 'notice period' },
+                { id: 'pNYSC',          weight: 2,  label: 'NYSC status' },
+            ];
+
+            let earned = 0;
+            let firstMissing = null;
+
+            for (const f of FIELDS) {
+                const el = document.getElementById(f.id);
+                if (el && el.value && el.value.trim()) {
+                    earned += f.weight;
+                } else if (!firstMissing) {
+                    firstMissing = f.label;
+                }
+            }
+
+            document.getElementById('completenessPct').textContent = earned + '%';
+            const fill = document.getElementById('completenessFill');
+            fill.style.width = earned + '%';
+            fill.style.background = earned >= 80 ? '#16a34a' : earned >= 50 ? '#ED880D' : '#ef4444';
+
+            const hint = document.getElementById('completenessHint');
+            if (earned >= 80) {
+                hint.textContent = 'Great — you\'ll receive fully personalised digests.';
+                hint.style.color = '#16a34a';
+            } else if (earned >= 50) {
+                hint.textContent = firstMissing ? `Add ${firstMissing} to improve your matches.` : 'Almost there!';
+                hint.style.color = '#ED880D';
+            } else {
+                hint.textContent = firstMissing ? `Start with ${firstMissing} to unlock personalised digests.` : 'Complete your profile.';
+                hint.style.color = '#ef4444';
+            }
         }
 
         // ── Save profile ─────────────────────────────────────────
@@ -591,6 +737,13 @@
                 location_pref:        document.getElementById('pLocation').value || null,
                 salary_expectation:   document.getElementById('pSalary').value || null,
                 linkedin_url:         document.getElementById('pLinkedin').value.trim() || null,
+                nysc_status:          document.getElementById('pNYSC').value || null,
+                certifications:       document.getElementById('pCertifications').value.trim() || null,
+                sector_pref:          document.getElementById('pSectorPref').value || null,
+                company_type_pref:    document.getElementById('pCompanyType').value || null,
+                contract_type_pref:   document.getElementById('pContractType').value || null,
+                notice_period:        document.getElementById('pNoticePeriod').value || null,
+                willing_abroad:       document.getElementById('pWillingAbroad').checked,
             };
 
             // Update sidebar name immediately
@@ -619,6 +772,7 @@
             } else {
                 toast.style.display = 'flex';
                 setTimeout(() => { toast.style.display = 'none'; }, 3000);
+                updateCompleteness();
             }
         }
 
@@ -696,6 +850,15 @@
 
         sb.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN') bootProfile(session);
+        });
+
+        // Live completeness updates
+        ['pCategory','pSeniority','pName','pYearsExp','pLocation','pSectorPref',
+         'pCertifications','pBackground','pEmploymentStatus','pWorkType',
+         'pCompanyType','pContractType','pNoticePeriod','pNYSC'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', updateCompleteness);
+            if (el && el.tagName === 'INPUT') el.addEventListener('input', updateCompleteness);
         });
 
         // Hard timeout — if nothing resolves in 8s, show an error

@@ -115,8 +115,10 @@ def fetch_paid_subscribers() -> list[dict]:
         params={
             "select": (
                 "email,name,category,seniority,location_pref,work_type_pref,"
-                "years_experience,background,open_to_relocation,"
-                "employment_status,job_hunting_status,subscription_status"
+                "years_experience,background,open_to_relocation,willing_abroad,"
+                "employment_status,job_hunting_status,subscription_status,"
+                "nysc_status,sector_pref,company_type_pref,contract_type_pref,"
+                "notice_period,certifications"
             ),
             "subscription_status": "eq.paid",
         },
@@ -417,21 +419,29 @@ def rank_jobs_with_claude(filtered_jobs: list[dict], sub: dict) -> list[dict]:
     # Build profile summary
     profile_lines = []
     fields = [
-        ("category",          "Desired category"),
+        ("category",          "Desired job category"),
         ("seniority",         "Seniority level"),
         ("location_pref",     "Location preference"),
-        ("work_type_pref",    "Work type preference"),
+        ("work_type_pref",    "Work type (onshore/offshore)"),
+        ("sector_pref",       "Sector preference"),
+        ("company_type_pref", "Company type preference"),
+        ("contract_type_pref","Contract type preference"),
         ("years_experience",  "Years of experience"),
         ("background",        "Educational background"),
+        ("certifications",    "Professional certifications"),
         ("employment_status", "Employment status"),
         ("job_hunting_status","Job hunting status"),
+        ("notice_period",     "Notice period / availability"),
+        ("nysc_status",       "NYSC status"),
     ]
     for key, label in fields:
         val = sub.get(key)
         if val:
             profile_lines.append(f"- {label}: {val}")
     if sub.get("open_to_relocation"):
-        profile_lines.append("- Open to relocation: Yes")
+        profile_lines.append("- Open to relocation within Nigeria: Yes")
+    if sub.get("willing_abroad"):
+        profile_lines.append("- Open to roles outside Nigeria: Yes")
 
     profile_text = "\n".join(profile_lines) if profile_lines else "- No profile data"
 
@@ -443,13 +453,26 @@ CANDIDATE PROFILE:
 JOBS THIS WEEK ({len(filtered_jobs)} listings):
 {jobs_text}
 
-Return the top 10 most relevant jobs for this candidate as a JSON array.
-Each item: {{"index": <1-based number>, "reason": "<max 7 words why this fits>"}}
+INSTRUCTIONS:
+Return the top 10 most relevant jobs as a JSON array.
+Each item: {{"index": <1-based number>, "reason": "<max 8 words why this fits>"}}
 
-Rules:
-- Rank by relevance to the candidate's profile
-- Reasons must be specific: "exact seniority and category match", "Port Harcourt location match", etc.
-- Return ONLY the JSON array, no other text"""
+MATCHING RULES — treat preferences as ranking weights, not hard filters:
+1. Prioritise strong matches on category, seniority, sector and company type
+2. Include jobs outside stated preferences if they are a clear career opportunity:
+   - Well-known employer (Shell, TotalEnergies, SLB, NNPC, ExxonMobil, etc.)
+   - Significant seniority step-up from current role
+   - Rare or highly relevant certification match (e.g. NEBOSH for HSE roles)
+3. For out-of-preference picks, the reason must explain WHY it's worth considering despite the mismatch
+4. Never include irrelevant roles just to fill 10 slots — fewer strong matches is better than 10 weak ones
+
+REASON EXAMPLES:
+- "Exact sector, seniority and location match"
+- "Shell IOC — strong career step despite midstream preference"
+- "NEBOSH required — perfect cert match"
+- "Offshore role, matches work type preference"
+
+Return ONLY the JSON array, no other text."""
 
     response = client.messages.create(
         model="claude-haiku-4-5",
