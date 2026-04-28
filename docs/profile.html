@@ -148,6 +148,68 @@
         .profile-completeness-track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
         .profile-completeness-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease, background 0.3s; }
         .profile-completeness-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+
+        /* ── Mobile sidebar overrides ─────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .profile-main { padding: 24px 0 60px; }
+
+            /* Kill sticky so the sidebar never floats over the card */
+            .profile-sidebar { position: static; }
+
+            /* Compact horizontal strip: avatar left, info right */
+            .profile-avatar-wrap {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                text-align: left;
+                margin-bottom: 0;
+                padding: 16px;
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-lg, 16px);
+            }
+            .profile-avatar {
+                width: 52px; height: 52px;
+                font-size: 1.2rem;
+                flex-shrink: 0;
+                margin: 0;
+            }
+            .profile-avatar-info { flex: 1; min-width: 0; }
+            .profile-user-name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .profile-user-email { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .profile-sub-badge { margin-top: 6px; }
+
+            /* Completeness bar stays inside the strip */
+            .profile-completeness {
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+
+            /* Hide sidebar nav entirely on mobile — sign-out is in the card actions */
+            .profile-nav { display: none; }
+
+            /* Sign out link inside form actions row (only visible on mobile) */
+            .profile-mobile-signout {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-left: auto;
+                font-size: 0.82rem;
+                font-weight: 500;
+                color: var(--text-muted);
+                background: none;
+                border: none;
+                font-family: var(--font-body);
+                cursor: pointer;
+                padding: 8px 4px;
+                transition: color 0.15s;
+            }
+            .profile-mobile-signout:hover { color: #ef4444; }
+        }
+        @media (min-width: 769px) {
+            .profile-avatar-info { display: contents; }
+            .profile-mobile-signout { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -181,6 +243,7 @@
                     <aside class="profile-sidebar">
                         <div class="profile-avatar-wrap">
                             <div class="profile-avatar" id="sidebarAvatar">?</div>
+                            <div class="profile-avatar-info">
                             <div class="profile-user-name" id="sidebarName">—</div>
                             <div class="profile-user-email" id="sidebarEmail">—</div>
                             <div id="sidebarSubBadge"></div>
@@ -194,6 +257,7 @@
                                 </div>
                                 <p class="profile-completeness-hint" id="completenessHint">Fill in your profile to get personalised digests.</p>
                             </div>
+                            </div><!-- /profile-avatar-info -->
                         </div>
 
                         <nav class="profile-nav">
@@ -523,6 +587,11 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 Profile saved!
                             </div>
+                            <!-- Sign out visible only on mobile (sidebar nav hidden) -->
+                            <button class="profile-mobile-signout" onclick="signOut()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                Sign out
+                            </button>
                         </div>
                         <div class="profile-error-msg" id="profileErrorMsg"></div>
 
