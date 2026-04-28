@@ -283,7 +283,7 @@ function toggleShowStale() {
 }
 
 function updateModalUpvoteBtn(jobId) {
-    const a = document.getElementById('modalActions');
+    const a = document.getElementById('modalFooter');
     if (!a) return;
     const job = allJobs.find(j => j.id === jobId);
     if (!job) return;
@@ -538,43 +538,90 @@ function openModal(jobId) {
     modalViewCount++;
     checkShareNudge();
 
+    // ── Header
+    const avatarEl = document.getElementById('modalAvatar');
+    const sourceEl = document.getElementById('modalSource');
+    if (avatarEl) avatarEl.textContent = (job.company || job.source || '?').charAt(0);
+    if (sourceEl) sourceEl.textContent = job.source || '';
+
+    // ── Meta pills
+    const metaPills = [];
+    if (job.location) metaPills.push(`<span class="modal-meta-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${escapeHtml(job.location)}</span>`);
+    if (job.date_posted) metaPills.push(`<span class="modal-meta-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ${formatDate(job.date_posted)}</span>`);
+    if (job.tags) {
+        if (job.tags.seniority) metaPills.push(`<span class="modal-meta-pill">${escapeHtml(job.tags.seniority)}</span>`);
+        if (job.tags.employment_type) metaPills.push(`<span class="modal-meta-pill">${escapeHtml(job.tags.employment_type)}</span>`);
+    }
+
+    // ── Tag chips
+    let tagsHtml = '';
+    if (job.tags) {
+        const chips = [];
+        if (job.tags.category)   chips.push(`<span class="job-tag tag-category">${escapeHtml(job.tags.category)}</span>`);
+        if (job.tags.discipline) chips.push(`<span class="job-tag tag-discipline">${escapeHtml(job.tags.discipline)}</span>`);
+        (job.tags.skills || []).slice(0, 5).forEach(s => chips.push(`<span class="job-tag tag-skill">${escapeHtml(s)}</span>`));
+        if (chips.length) tagsHtml = `<div class="modal-tags">${chips.join('')}</div>`;
+    }
+
+    // ── Body
     modalBody.innerHTML = `
-        <span class="modal-source">${escapeHtml(job.source)}</span>
         <h2 class="modal-title">${escapeHtml(job.job_title)}</h2>
         <p class="modal-company">${escapeHtml(job.company || 'Company not listed')}</p>
-        <div class="modal-meta">
-            ${job.location ? `<span>${escapeHtml(job.location)}</span>` : ''}
-            ${job.date_posted ? `<span>Posted: ${formatDate(job.date_posted)}</span>` : ''}
-        </div>
-        ${job.tags ? `<div class="job-tags modal-tags">
-            ${job.tags.category ? `<span class="job-tag tag-category">${escapeHtml(job.tags.category)}</span>` : ''}
-            ${job.tags.discipline ? `<span class="job-tag tag-discipline">${escapeHtml(job.tags.discipline)}</span>` : ''}
-            ${job.tags.seniority ? `<span class="job-tag tag-seniority">${escapeHtml(job.tags.seniority)}</span>` : ''}
-            ${job.tags.employment_type && job.tags.employment_type !== 'Full-time' ? `<span class="job-tag tag-employment">${escapeHtml(job.tags.employment_type)}</span>` : ''}
-            ${(job.tags.skills || []).slice(0, 4).map(s => `<span class="job-tag tag-skill">${escapeHtml(s)}</span>`).join('')}
-        </div>` : ''}
-        <div class="modal-desc">${escapeHtml(job.description || 'No description available.')}</div>
-        <div class="modal-actions" id="modalActions">
-            ${upvoteBtnHtml(job.id, job.upvotes)}
-            <button class="save-btn ${isSaved(job.id) ? 'saved' : ''}" onclick="toggleSaved(${job.id})" title="${isSaved(job.id) ? 'Remove from collection' : 'Save to collection'}" style="width:38px;height:38px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isSaved(job.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-            </button>
-            ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary modal-apply">Apply Now</a>` : ''}
-            ${flagBtnHtml(job.id)}
-        </div>
-        <div class="modal-share">
+        ${metaPills.length ? `<div class="modal-meta">${metaPills.join('')}</div>` : ''}
+        ${tagsHtml}
+        ${job.description ? `
+        <div class="modal-divider"></div>
+        <div class="modal-section-label">Job Description</div>
+        <div class="modal-desc">${escapeHtml(job.description)}</div>` : ''}
+        <div class="modal-share" style="margin-top:24px;">
             <span class="share-label">Share</span>
             ${shareBtnsHtml(job, 16)}
         </div>
     `;
 
+    // ── Sticky footer actions
+    const footerEl = document.getElementById('modalFooter');
+    if (footerEl) {
+        footerEl.innerHTML = `
+            ${upvoteBtnHtml(job.id, job.upvotes)}
+            <button class="save-btn ${isSaved(job.id) ? 'saved' : ''}" onclick="toggleSaved(${job.id})" title="${isSaved(job.id) ? 'Remove from collection' : 'Save to collection'}" style="width:42px;height:42px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isSaved(job.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            </button>
+            ${flagBtnHtml(job.id)}
+            ${job.apply_url ? `<a href="${escapeHtml(job.apply_url)}" target="_blank" rel="noopener" class="btn btn-primary modal-apply">Apply Now →</a>` : ''}
+        `;
+    }
+
+    // Update URL so job can be linked/shared
+    const url = new URL(window.location.href);
+    url.searchParams.set('job', job.id);
+    history.replaceState(null, '', url.toString());
+
+    modalBody.scrollTop = 0;
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    modalOverlay.classList.remove('open');
+    const panel = document.getElementById('jobModal');
+    if (panel) {
+        panel.classList.add('closing');
+        setTimeout(() => {
+            panel.classList.remove('closing');
+            modalOverlay.classList.remove('open');
+        }, 220);
+    } else {
+        modalOverlay.classList.remove('open');
+    }
     document.body.style.overflow = '';
+    // Remove ?job= from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('job');
+    history.replaceState(null, '', url.toString());
 }
 
 // ============================================================
