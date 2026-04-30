@@ -841,8 +841,18 @@ document.querySelectorAll('.mobile-menu-link').forEach(l => l.addEventListener('
 const alertForm    = document.getElementById('alertForm');
 const alertSuccess = document.getElementById('alertSuccess');
 
-// Prevent accidental form submission (no free tier — Paystack button handles everything)
+// Prevent accidental form submission
 if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
+
+// Wire up the subscribe button — the <a> tag works as a plain link with no JS,
+// but when JS loads we intercept the click to handle payment logic properly.
+const digestBtnEl = document.getElementById('digestBtn');
+if (digestBtnEl) {
+    digestBtnEl.addEventListener('click', function(e) {
+        e.preventDefault();
+        startDigestPayment();
+    });
+}
 
 // ============================================================
 // SUBSCRIBE SECTION — auth-gated Flutterwave payment
@@ -948,7 +958,7 @@ async function startDigestPayment() {
     const btn = document.getElementById('digestBtn');
     document.getElementById('digestBtnText').style.display    = 'none';
     document.getElementById('digestBtnSpinner').style.display = 'inline';
-    btn.disabled = true;
+    if (btn) btn.style.pointerEvents = 'none'; // prevent double-click (a tag, not button)
 
     const tx_ref = 'DH-' + Date.now();
 
@@ -975,13 +985,13 @@ async function startDigestPayment() {
             } else {
                 document.getElementById('digestBtnText').style.display    = 'inline';
                 document.getElementById('digestBtnSpinner').style.display = 'none';
-                btn.disabled = false;
+                if (btn) btn.style.pointerEvents = '';
             }
         },
         onclose: function() {
             document.getElementById('digestBtnText').style.display    = 'inline';
             document.getElementById('digestBtnSpinner').style.display = 'none';
-            btn.disabled = false;
+            if (btn) btn.style.pointerEvents = '';
         },
     });
   } catch(err) {

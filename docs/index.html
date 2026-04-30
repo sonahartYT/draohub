@@ -407,10 +407,10 @@
                             </select>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-primary alert-submit" id="digestBtn" onclick="startDigestPayment()">
+                    <a href="login.html?next=index.html%23subscribe" class="btn btn-primary alert-submit" id="digestBtn" style="display:block;text-align:center;text-decoration:none;">
                         <span id="digestBtnText">Subscribe — ₦3,000/mo</span>
                         <span id="digestBtnSpinner" style="display:none;">Opening checkout…</span>
-                    </button>
+                    </a>
                     <p class="subscribe-note" id="subscribeNote">Billed monthly · Cancel anytime · Secure payment via Flutterwave</p>
                 </form>
             </div>
@@ -477,6 +477,6 @@
     <!-- CDN scripts loaded here (after page renders) so they never block page display -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
-    <script src="app.js?v=20260430c"></script>
+    <script src="app.js?v=20260430d"></script>
 </body>
 </html>
