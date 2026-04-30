@@ -130,6 +130,12 @@
         <div class="login-card">
             <a href="index.html" class="login-logo">Draco<span>Hub</span>.</a>
 
+            <!-- Welcome banner (shown after subscribing) -->
+            <div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,#142A47,#1e3d66);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+                <div style="font-weight:800;font-size:0.88rem;color:#fff;margin-bottom:4px;">🎉 Payment confirmed — you're in!</div>
+                <div style="font-size:0.78rem;color:#8AA0B8;line-height:1.5;">Create your free account below to manage your profile, personalise your digest, and track your subscription. Use the <strong style="color:#ED880D;">same email</strong> you subscribed with.</div>
+            </div>
+
             <!-- Tabs -->
             <div class="login-tabs">
                 <button class="login-tab active" id="tabSignIn">Sign In</button>
@@ -281,6 +287,28 @@
         } catch (e) {
             console.error('Supabase init failed:', e);
         }
+
+        // ── Handle ?welcome=1 from subscribe flow ────────────────
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('welcome') === '1') {
+                // Show welcome banner
+                document.getElementById('welcomeBanner').style.display = 'block';
+
+                // Switch to Create Account tab
+                document.getElementById('tabSignUp').click();
+
+                // Pre-fill email if passed
+                const email = params.get('email');
+                if (email) {
+                    const suEmail = document.getElementById('suEmail');
+                    if (suEmail) suEmail.value = decodeURIComponent(email);
+                    // Also pre-fill sign-in email in case they already have an account
+                    const siEmail = document.getElementById('siEmail');
+                    if (siEmail) siEmail.value = decodeURIComponent(email);
+                }
+            }
+        }());
 
         if (sb) {
             sb.auth.getSession().then(function (res) {

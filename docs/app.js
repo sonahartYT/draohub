@@ -942,7 +942,9 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
         if (countdown) countdown.textContent = secs > 0 ? `Redirecting in ${secs}s…` : '';
         if (secs <= 0) {
             clearInterval(timer);
-            window.location.href = `profile.html?welcome=1&email=${encodeURIComponent(profile.email)}`;
+            // Redirect to login → create account, then on to profile with welcome banner
+            const next = encodeURIComponent('profile.html?welcome=1');
+            window.location.href = `login.html?welcome=1&email=${encodeURIComponent(profile.email)}&next=${next}`;
         }
     }, 1000);
 }
