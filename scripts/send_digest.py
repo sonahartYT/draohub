@@ -47,8 +47,8 @@ TERMII_DEVICE_ID     = os.getenv("TERMII_DEVICE_ID")
 # Template IDs — create these in your Termii dashboard, then set as secrets
 TERMII_TEMPLATE_PERSONALISED = os.getenv("TERMII_TEMPLATE_PERSONALISED")
 TERMII_TEMPLATE_GENERIC      = os.getenv("TERMII_TEMPLATE_GENERIC")
-FROM_EMAIL           = os.getenv("DIGEST_FROM_EMAIL", "DracoHub Digest <digest@dracohub.com>")
-SITE_URL             = "https://sonahartyt.github.io/dracohub/"
+FROM_EMAIL           = os.getenv("DIGEST_FROM_EMAIL", "DracoHub Digest <digest@dracohub.co>")
+SITE_URL             = "https://dracohub.co/"
 
 ACCENT = "#ED880D"
 DARK   = "#142A47"
