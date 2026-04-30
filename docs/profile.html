@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .profile-main { flex: 1; padding: 48px 0 80px; }
@@ -652,6 +651,7 @@
         </div><!-- /container -->
     </main>
 
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
         const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
@@ -983,16 +983,27 @@
             loadProfile(session);
         }
 
-        // getSession() for normal loads; SIGNED_IN catches OAuth redirects
+        // getSession() handles already-logged-in users (session in localStorage).
+        // For OAuth/email callbacks the session isn't in localStorage yet, so
+        // getSession() returns null — we wait for onAuthStateChange to fire instead.
         sb.auth.getSession()
-            .then(({ data: { session } }) => bootProfile(session))
-            .catch(err => {
-                console.error('getSession error:', err);
-                bootProfile(null);
-            });
+            .then(({ data: { session } }) => {
+                if (session) {
+                    bootProfile(session);
+                }
+                // null here = possible auth callback in progress; let onAuthStateChange handle it
+            })
+            .catch(() => {});
 
         sb.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN') bootProfile(session);
+            if (session) {
+                // Covers: INITIAL_SESSION (logged in), SIGNED_IN (OAuth/email callback)
+                bootProfile(session);
+            } else if (!profileLoaded && (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION')) {
+                // Auth is fully settled and there is no session — redirect to login
+                profileLoaded = true;
+                window.location.href = 'login.html?next=profile.html';
+            }
         });
 
         // Live completeness updates
