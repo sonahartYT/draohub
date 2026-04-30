@@ -738,27 +738,20 @@ async function navSignOut() {
 }
 
 function initNavAuth() {
-    // Inject Supabase CDN dynamically — jobs are already loading by this point.
-    // If the CDN is slow or fails, jobs are completely unaffected.
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-    script.onload = () => {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                updateNavAuth(session);
-                initSubscribeSection();
-            });
-            supabase.auth.onAuthStateChange((_event, session) => {
-                updateNavAuth(session);
-                initSubscribeSection();
-            });
-        } catch (e) {
-            console.warn('Supabase auth nav init failed:', e);
-        }
-    };
-    script.onerror = () => console.warn('Supabase CDN failed to load — auth nav skipped');
-    document.head.appendChild(script);
+    // Supabase CDN is loaded in <head> — initialise client directly
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            updateNavAuth(session);
+            initSubscribeSection();
+        });
+        supabase.auth.onAuthStateChange((_event, session) => {
+            updateNavAuth(session);
+            initSubscribeSection();
+        });
+    } catch (e) {
+        console.warn('Supabase auth init failed:', e);
+    }
 }
 
 // ============================================================
