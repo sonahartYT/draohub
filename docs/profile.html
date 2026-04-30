@@ -694,7 +694,7 @@
                 currentUser = session.user;
 
                 // Try to claim any unlinked subscriber row matching this email first
-                await sb.rpc('claim_subscriber', { p_user_id: currentUser.id }).catch(() => {});
+                try { await sb.rpc('claim_subscriber', { p_user_id: currentUser.id }); } catch(e) {}
 
                 // Fetch subscriber row — query by user_id (works after claim_subscriber links it)
                 const { data: rows, error: fetchError } = await sb

@@ -321,7 +321,7 @@
                     }
                 } else if (event === 'SIGNED_IN' && session) {
                     // Fired after email confirmation link is clicked — redirect to profile
-                    sb.rpc('claim_subscriber', { p_user_id: session.user.id }).catch(function () {});
+                    try { await sb.rpc('claim_subscriber', { p_user_id: session.user.id }); } catch(e) {}
                     showSuccess('siSuccess', 'Email verified! Redirecting to your profile…');
                     setTimeout(redirectAfterLogin, 1000);
                 }
@@ -339,7 +339,7 @@
             const { data, error } = await sb.auth.signInWithPassword({ email, password });
             setLoading('btnSignIn', false);
             if (error) { showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
-            if (data.user) await sb.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
+            if (data.user) try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
             showSuccess('siSuccess', 'Signed in! Redirecting…');
             setTimeout(redirectAfterLogin, 800);
         });
@@ -361,7 +361,7 @@
             setLoading('btnSignUp', false);
             if (error) { showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
             if (!data.session) { showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.'); return; }
-            if (data.user) await sb.rpc('claim_subscriber', { p_user_id: data.user.id }).catch(() => {});
+            if (data.user) try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
             showSuccess('suSuccess', 'Account created! Redirecting to your profile…');
             setTimeout(redirectAfterLogin, 800);
         });
