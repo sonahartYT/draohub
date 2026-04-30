@@ -938,6 +938,12 @@ async function initSubscribeSection() {
                 if (bg  && draft.background) bg.value  = draft.background;
             } catch(e) {}
             localStorage.removeItem('dh_subscribe_draft');
+
+            // User just came back from login — auto-open checkout after a short
+            // delay so Flutterwave CDN has time to finish loading
+            setTimeout(function() {
+                startDigestPayment();
+            }, 800);
         }
     }
 }

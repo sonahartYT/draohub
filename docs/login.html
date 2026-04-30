@@ -310,9 +310,27 @@
         }
 
         if (sb) {
-            // If already logged in, redirect immediately
+            // If already logged in, show "already signed in" notice rather than auto-redirecting.
+            // Auto-redirect was causing a bounce loop: not-logged-in → Subscribe → login.html
+            // → stale session detected → bounced back to subscribe → user stuck.
             sb.auth.getSession().then(function (res) {
-                if (res.data.session) h.redirectAfterLogin();
+                if (res.data && res.data.session) {
+                    var email = res.data.session.user.email || '';
+                    h.showSuccess('siSuccess',
+                        'You\'re already signed in' + (email ? ' as <strong>' + email + '</strong>' : '') + '. ' +
+                        '<a href="' + (new URLSearchParams(window.location.search).get('next') || 'profile.html') + '" style="color:var(--accent);font-weight:600;">Continue →</a> ' +
+                        'or <span id="btnAutoSignOut" style="color:var(--accent);cursor:pointer;font-weight:600;">sign out</span> to use a different account.'
+                    );
+                    // Wire sign-out link after DOM update
+                    setTimeout(function() {
+                        var so = document.getElementById('btnAutoSignOut');
+                        if (so) so.addEventListener('click', function() {
+                            sb.auth.signOut().then(function() {
+                                document.getElementById('siSuccess').style.display = 'none';
+                            });
+                        });
+                    }, 50);
+                }
             });
             // Handle email confirmation + password reset callbacks
             sb.auth.onAuthStateChange(function (event, session) {
@@ -325,9 +343,9 @@
                         });
                     }
                 } else if (event === 'SIGNED_IN' && session) {
-                    sb.rpc('claim_subscriber', { p_user_id: session.user.id }).then(function(){}).catch(function(){});
-                    h.showSuccess('siSuccess', 'Email verified! Redirecting to your profile…');
-                    setTimeout(h.redirectAfterLogin, 1000);
+                    try { sb.rpc('claim_subscriber', { p_user_id: session.user.id }); } catch(e) {}
+                    h.showSuccess('siSuccess', 'Signed in! Redirecting…');
+                    setTimeout(h.redirectAfterLogin, 800);
                 }
             });
         }
