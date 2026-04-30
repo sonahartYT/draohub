@@ -211,12 +211,12 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- PART 1: Pure UI — runs immediately, no CDN needed -->
     <script>
     (function () {
         'use strict';
 
-        // ── Theme
+        // Theme
         const stored = localStorage.getItem('dracohub-theme');
         if (stored) document.documentElement.setAttribute('data-theme', stored);
         document.getElementById('themeToggle').addEventListener('click', function () {
@@ -225,160 +225,51 @@
             localStorage.setItem('dracohub-theme', next);
         });
 
-        // ── Helpers
-        function showTab(tab) {
+        // Helpers (global so Part 2 can use them too)
+        window._dhLogin = {};
+        window._dhLogin.showTab = function(tab) {
             document.getElementById('tabSignIn').classList.toggle('active', tab === 'signin');
             document.getElementById('tabSignUp').classList.toggle('active', tab === 'signup');
             document.getElementById('formSignIn').classList.toggle('active', tab === 'signin');
             document.getElementById('formSignUp').classList.toggle('active', tab === 'signup');
-        }
-
-        function togglePw(inputId) {
+        };
+        window._dhLogin.togglePw = function(inputId) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
-        }
-
-        function setLoading(btnId, loading) {
+        };
+        window._dhLogin.setLoading = function(btnId, loading) {
             const btn = document.getElementById(btnId);
             btn.disabled = loading;
             btn.querySelector('.login-btn-text').style.display = loading ? 'none' : 'inline';
-            btn.querySelector('.login-spinner').style.display = loading ? 'inline' : 'none';
-        }
-
-        function showError(elId, msg) {
+            btn.querySelector('.login-spinner').style.display  = loading ? 'inline' : 'none';
+        };
+        window._dhLogin.showError = function(elId, msg) {
             const el = document.getElementById(elId);
             el.textContent = msg; el.style.display = 'block';
-        }
-        function showSuccess(elId, html) {
+        };
+        window._dhLogin.showSuccess = function(elId, html) {
             const el = document.getElementById(elId);
             el.innerHTML = html; el.style.display = 'block';
-        }
-        function clearMessages() {
-            ['siError','siSuccess','suError','suSuccess'].forEach(id => {
+        };
+        window._dhLogin.clearMessages = function() {
+            ['siError','siSuccess','suError','suSuccess'].forEach(function(id) {
                 document.getElementById(id).style.display = 'none';
             });
-        }
-        function redirectAfterLogin() {
+        };
+        window._dhLogin.redirectAfterLogin = function() {
             const next = new URLSearchParams(window.location.search).get('next');
             window.location.href = next || 'profile.html';
-        }
+        };
 
-        // ── Tab switching
-        document.getElementById('tabSignIn').addEventListener('click', function () { showTab('signin'); });
-        document.getElementById('tabSignUp').addEventListener('click', function () { showTab('signup'); });
+        // Tab switching — works immediately
+        document.getElementById('tabSignIn').addEventListener('click', function () { window._dhLogin.showTab('signin'); });
+        document.getElementById('tabSignUp').addEventListener('click', function () { window._dhLogin.showTab('signup'); });
 
-        // ── Google OAuth
-        document.getElementById('btnGoogle').addEventListener('click', async function () {
-            if (!sb) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
-            const { error } = await sb.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin + (window.location.pathname.replace('login.html', '') || '/') + 'profile.html'
-                }
-            });
-            if (error) showError('siError', error.message);
-        });
+        // Password visibility toggles — works immediately
+        document.getElementById('toggleSiPw').addEventListener('click', function () { window._dhLogin.togglePw('siPassword'); });
+        document.getElementById('toggleSuPw').addEventListener('click', function () { window._dhLogin.togglePw('suPassword'); });
 
-        // ── Password toggles
-        document.getElementById('toggleSiPw').addEventListener('click', function () { togglePw('siPassword'); });
-        document.getElementById('toggleSuPw').addEventListener('click', function () { togglePw('suPassword'); });
-
-        // ── Supabase init
-        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
-
-        let sb = null;
-        try {
-            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (e) {
-            console.error('Supabase init failed:', e);
-        }
-
-        // ── Handle ?next= redirect after login ───────────────────
-        // If coming from subscribe flow, show a nudge on the login card
-        (function () {
-            const params = new URLSearchParams(window.location.search);
-            const next   = params.get('next') || '';
-            if (next.includes('subscribe')) {
-                document.getElementById('welcomeBanner').style.display = 'block';
-                // Switch to Create Account tab if new user
-                document.getElementById('tabSignUp').click();
-            }
-        }());
-
-        if (sb) {
-            sb.auth.getSession().then(function (res) {
-                if (res.data.session) redirectAfterLogin();
-            });
-            sb.auth.onAuthStateChange(function (event, session) {
-                if (event === 'PASSWORD_RECOVERY') {
-                    const newPass = prompt('Enter your new password (min. 8 characters):');
-                    if (newPass && newPass.length >= 8) {
-                        sb.auth.updateUser({ password: newPass }).then(function (res) {
-                            if (res.error) alert('Error: ' + res.error.message);
-                            else { alert('Password updated! You are now signed in.'); redirectAfterLogin(); }
-                        });
-                    }
-                } else if (event === 'SIGNED_IN' && session) {
-                    // Fired after email confirmation link is clicked — redirect to profile
-                    try { await sb.rpc('claim_subscriber', { p_user_id: session.user.id }); } catch(e) {}
-                    showSuccess('siSuccess', 'Email verified! Redirecting to your profile…');
-                    setTimeout(redirectAfterLogin, 1000);
-                }
-            });
-        }
-
-        // ── Sign In
-        document.getElementById('btnSignIn').addEventListener('click', async function () {
-            clearMessages();
-            if (!sb) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
-            const email    = document.getElementById('siEmail').value.trim();
-            const password = document.getElementById('siPassword').value;
-            if (!email || !password) { showError('siError', 'Please enter your email and password.'); return; }
-            setLoading('btnSignIn', true);
-            const { data, error } = await sb.auth.signInWithPassword({ email, password });
-            setLoading('btnSignIn', false);
-            if (error) { showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
-            if (data.user) try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
-            showSuccess('siSuccess', 'Signed in! Redirecting…');
-            setTimeout(redirectAfterLogin, 800);
-        });
-
-        // ── Create Account
-        document.getElementById('btnSignUp').addEventListener('click', async function () {
-            clearMessages();
-            if (!sb) { showError('suError', 'Auth service unavailable. Please refresh.'); return; }
-            const firstName = document.getElementById('suFirstName').value.trim();
-            const lastName  = document.getElementById('suLastName').value.trim();
-            const name      = [firstName, lastName].filter(Boolean).join(' ');
-            const email     = document.getElementById('suEmail').value.trim();
-            const password  = document.getElementById('suPassword').value;
-            if (!email || !password) { showError('suError', 'Please enter your email and a password.'); return; }
-            if (password.length < 8)  { showError('suError', 'Password must be at least 8 characters.'); return; }
-            setLoading('btnSignUp', true);
-            const emailRedirectTo = window.location.origin + window.location.pathname;
-            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, first_name: firstName, last_name: lastName }, emailRedirectTo } });
-            setLoading('btnSignUp', false);
-            if (error) { showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
-            if (!data.session) { showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.'); return; }
-            if (data.user) try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
-            showSuccess('suSuccess', 'Account created! Redirecting to your profile…');
-            setTimeout(redirectAfterLogin, 800);
-        });
-
-        // ── Forgot Password
-        document.getElementById('forgotPwLink').addEventListener('click', async function () {
-            clearMessages();
-            if (!sb) { showError('siError', 'Auth service unavailable. Please refresh.'); return; }
-            const email = document.getElementById('siEmail').value.trim();
-            if (!email) { showError('siError', 'Enter your email address above first, then click "Forgot your password?"'); return; }
-            const redirectTo = window.location.href.split('?')[0];
-            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
-            if (error) showError('siError', error.message);
-            else showSuccess('siSuccess', 'Password reset email sent — check your inbox.');
-        });
-
-        // ── Enter key
+        // Enter key — works immediately
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Enter') return;
             if (document.getElementById('formSignIn').classList.contains('active')) {
@@ -386,6 +277,118 @@
             } else {
                 document.getElementById('btnSignUp').click();
             }
+        });
+
+        // ?next= banner — works immediately
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const next   = params.get('next') || '';
+            if (next.includes('subscribe')) {
+                document.getElementById('welcomeBanner').style.display = 'block';
+                window._dhLogin.showTab('signup');
+            }
+        }());
+
+    }());
+    </script>
+
+    <!-- PART 2: Supabase CDN + auth logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+    (function () {
+        'use strict';
+        var h = window._dhLogin; // shorthand for helpers defined above
+
+        var SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+
+        var sb = null;
+        try {
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error('Supabase init failed:', e);
+        }
+
+        if (sb) {
+            // If already logged in, redirect immediately
+            sb.auth.getSession().then(function (res) {
+                if (res.data.session) h.redirectAfterLogin();
+            });
+            // Handle email confirmation + password reset callbacks
+            sb.auth.onAuthStateChange(function (event, session) {
+                if (event === 'PASSWORD_RECOVERY') {
+                    const newPass = prompt('Enter your new password (min. 8 characters):');
+                    if (newPass && newPass.length >= 8) {
+                        sb.auth.updateUser({ password: newPass }).then(function (res) {
+                            if (res.error) alert('Error: ' + res.error.message);
+                            else { alert('Password updated! You are now signed in.'); h.redirectAfterLogin(); }
+                        });
+                    }
+                } else if (event === 'SIGNED_IN' && session) {
+                    sb.rpc('claim_subscriber', { p_user_id: session.user.id }).then(function(){}).catch(function(){});
+                    h.showSuccess('siSuccess', 'Email verified! Redirecting to your profile…');
+                    setTimeout(h.redirectAfterLogin, 1000);
+                }
+            });
+        }
+
+        // Google OAuth
+        document.getElementById('btnGoogle').addEventListener('click', async function () {
+            if (!sb) { h.showError('siError', 'Auth service still loading — please wait a moment and try again.'); return; }
+            const { error } = await sb.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin + '/profile.html' }
+            });
+            if (error) h.showError('siError', error.message);
+        });
+
+        // Sign In
+        document.getElementById('btnSignIn').addEventListener('click', async function () {
+            h.clearMessages();
+            if (!sb) { h.showError('siError', 'Auth service still loading — please wait a moment and try again.'); return; }
+            const email    = document.getElementById('siEmail').value.trim();
+            const password = document.getElementById('siPassword').value;
+            if (!email || !password) { h.showError('siError', 'Please enter your email and password.'); return; }
+            h.setLoading('btnSignIn', true);
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            h.setLoading('btnSignIn', false);
+            if (error) { h.showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
+            try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
+            h.showSuccess('siSuccess', 'Signed in! Redirecting…');
+            setTimeout(h.redirectAfterLogin, 800);
+        });
+
+        // Create Account
+        document.getElementById('btnSignUp').addEventListener('click', async function () {
+            h.clearMessages();
+            if (!sb) { h.showError('suError', 'Auth service still loading — please wait a moment and try again.'); return; }
+            const firstName = document.getElementById('suFirstName').value.trim();
+            const lastName  = document.getElementById('suLastName').value.trim();
+            const name      = [firstName, lastName].filter(Boolean).join(' ');
+            const email     = document.getElementById('suEmail').value.trim();
+            const password  = document.getElementById('suPassword').value;
+            if (!email || !password) { h.showError('suError', 'Please enter your email and a password.'); return; }
+            if (password.length < 8)  { h.showError('suError', 'Password must be at least 8 characters.'); return; }
+            h.setLoading('btnSignUp', true);
+            const emailRedirectTo = window.location.origin + '/login.html';
+            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, first_name: firstName, last_name: lastName }, emailRedirectTo } });
+            h.setLoading('btnSignUp', false);
+            if (error) { h.showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
+            if (!data.session) { h.showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link to activate your account.'); return; }
+            try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
+            h.showSuccess('suSuccess', 'Account created! Redirecting to your profile…');
+            setTimeout(h.redirectAfterLogin, 800);
+        });
+
+        // Forgot Password
+        document.getElementById('forgotPwLink').addEventListener('click', async function () {
+            h.clearMessages();
+            if (!sb) { h.showError('siError', 'Auth service still loading — please wait a moment and try again.'); return; }
+            const email = document.getElementById('siEmail').value.trim();
+            if (!email) { h.showError('siError', 'Enter your email address above first, then click "Forgot your password?"'); return; }
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/login.html' });
+            if (error) h.showError('siError', error.message);
+            else h.showSuccess('siSuccess', 'Password reset email sent — check your inbox.');
         });
 
     }());
