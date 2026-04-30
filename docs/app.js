@@ -921,19 +921,19 @@ function goLoginToSubscribe() {
 
 async function startDigestPayment() {
   try {
-    // Guard: Supabase must be ready
-    if (!supabase) {
-        alert('Still loading — please wait a moment and try again.');
-        return;
+    // Try to get session — if Supabase isn't ready or there's no session, go to login
+    let session = null;
+    if (supabase) {
+        try {
+            const { data } = await supabase.auth.getSession();
+            session = data?.session || null;
+        } catch(e) { /* fall through to login redirect */ }
     }
-
-    // Guard: must be logged in
-    const { data: { session } } = await supabase.auth.getSession();
     if (!session) { goLoginToSubscribe(); return; }
 
     // Guard: Flutterwave must be loaded
     if (typeof FlutterwaveCheckout === 'undefined') {
-        alert('Payment system still loading — please wait a moment and try again.');
+        alert('Payment system is still loading. Please wait a moment and try again.');
         return;
     }
 

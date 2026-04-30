@@ -17,8 +17,6 @@
       gtag('js', new Date());
       gtag('config', 'G-RW46C4GGWS');
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="https://checkout.flutterwave.com/v3.js"></script>
 </head>
 <body>
 
@@ -476,6 +474,9 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260430b"></script>
+    <!-- CDN scripts loaded here (after page renders) so they never block page display -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script src="app.js?v=20260430c"></script>
 </body>
 </html>
