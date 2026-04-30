@@ -309,19 +309,24 @@
             console.error('Supabase init failed:', e);
         }
 
+        // True only when the user explicitly clicks Sign In / Create Account / Google,
+        // or when arriving via an email confirmation link (hash contains access_token).
+        // SIGNED_IN also fires on auto token-refresh at page load — we must NOT redirect then.
+        var userTriggeredAuth = window.location.hash.includes('access_token');
+
         if (sb) {
-            // If already logged in, show "already signed in" notice rather than auto-redirecting.
-            // Auto-redirect was causing a bounce loop: not-logged-in → Subscribe → login.html
-            // → stale session detected → bounced back to subscribe → user stuck.
+            // If already logged in, show an "already signed in" notice so the user can
+            // choose to continue or sign out. Do NOT auto-redirect — that caused a bounce
+            // loop: subscribe → login → SIGNED_IN fires → back to subscribe → stuck.
             sb.auth.getSession().then(function (res) {
                 if (res.data && res.data.session) {
                     var email = res.data.session.user.email || '';
+                    var nextUrl = new URLSearchParams(window.location.search).get('next') || 'profile.html';
                     h.showSuccess('siSuccess',
                         'You\'re already signed in' + (email ? ' as <strong>' + email + '</strong>' : '') + '. ' +
-                        '<a href="' + (new URLSearchParams(window.location.search).get('next') || 'profile.html') + '" style="color:var(--accent);font-weight:600;">Continue →</a> ' +
+                        '<a href="' + nextUrl + '" style="color:var(--accent);font-weight:600;">Continue →</a> ' +
                         'or <span id="btnAutoSignOut" style="color:var(--accent);cursor:pointer;font-weight:600;">sign out</span> to use a different account.'
                     );
-                    // Wire sign-out link after DOM update
                     setTimeout(function() {
                         var so = document.getElementById('btnAutoSignOut');
                         if (so) so.addEventListener('click', function() {
@@ -332,7 +337,10 @@
                     }, 50);
                 }
             });
-            // Handle email confirmation + password reset callbacks
+
+            // Handle email confirmation + password reset callbacks.
+            // Only redirect on SIGNED_IN when userTriggeredAuth is true —
+            // otherwise it would fire on auto token-refresh at page load and bounce the user.
             sb.auth.onAuthStateChange(function (event, session) {
                 if (event === 'PASSWORD_RECOVERY') {
                     const newPass = prompt('Enter your new password (min. 8 characters):');
@@ -342,7 +350,7 @@
                             else { alert('Password updated! You are now signed in.'); h.redirectAfterLogin(); }
                         });
                     }
-                } else if (event === 'SIGNED_IN' && session) {
+                } else if (event === 'SIGNED_IN' && session && userTriggeredAuth) {
                     try { sb.rpc('claim_subscriber', { p_user_id: session.user.id }); } catch(e) {}
                     h.showSuccess('siSuccess', 'Signed in! Redirecting…');
                     setTimeout(h.redirectAfterLogin, 800);
@@ -353,11 +361,12 @@
         // Google OAuth
         document.getElementById('btnGoogle').addEventListener('click', async function () {
             if (!sb) { h.showError('siError', 'Auth service still loading — please wait a moment and try again.'); return; }
+            userTriggeredAuth = true;
             const { error } = await sb.auth.signInWithOAuth({
                 provider: 'google',
                 options: { redirectTo: window.location.origin + '/profile.html' }
             });
-            if (error) h.showError('siError', error.message);
+            if (error) { userTriggeredAuth = false; h.showError('siError', error.message); }
         });
 
         // Sign In
@@ -368,9 +377,10 @@
             const password = document.getElementById('siPassword').value;
             if (!email || !password) { h.showError('siError', 'Please enter your email and password.'); return; }
             h.setLoading('btnSignIn', true);
+            userTriggeredAuth = true;
             const { data, error } = await sb.auth.signInWithPassword({ email, password });
             h.setLoading('btnSignIn', false);
-            if (error) { h.showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
+            if (error) { userTriggeredAuth = false; h.showError('siError', error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message); return; }
             try { await sb.rpc('claim_subscriber', { p_user_id: data.user.id }); } catch(e) {}
             h.showSuccess('siSuccess', 'Signed in! Redirecting…');
             setTimeout(h.redirectAfterLogin, 800);
@@ -388,6 +398,7 @@
             if (!email || !password) { h.showError('suError', 'Please enter your email and a password.'); return; }
             if (password.length < 8)  { h.showError('suError', 'Password must be at least 8 characters.'); return; }
             h.setLoading('btnSignUp', true);
+            userTriggeredAuth = true;
             const emailRedirectTo = window.location.origin + '/login.html';
             const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, first_name: firstName, last_name: lastName }, emailRedirectTo } });
             h.setLoading('btnSignUp', false);
