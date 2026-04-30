@@ -856,7 +856,9 @@ function startDigestPayment() {
         return;
     }
 
-    const name          = document.getElementById('alertName').value.trim();
+    const firstName     = document.getElementById('alertFirstName').value.trim();
+    const lastName      = document.getElementById('alertLastName').value.trim();
+    const name          = [firstName, lastName].filter(Boolean).join(' ');
     const category      = document.getElementById('alertCategory').value;
     const seniority     = document.getElementById('alertSeniority').value;
     const location_pref = document.getElementById('alertLocation').value;
@@ -888,7 +890,7 @@ function startDigestPayment() {
         callback: async function(response) {
             if (response.status === 'successful' || response.status === 'completed') {
                 await handleDigestSuccess(
-                    { email, name, category, seniority, location_pref, background },
+                    { email, name, firstName, lastName, category, seniority, location_pref, background },
                     response.tx_ref,
                     response.transaction_id
                 );
@@ -944,7 +946,9 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
             clearInterval(timer);
             // Redirect to login → create account, then on to profile with welcome banner
             const next = encodeURIComponent('profile.html?welcome=1');
-            window.location.href = `login.html?welcome=1&email=${encodeURIComponent(profile.email)}&next=${next}`;
+            const fn = encodeURIComponent(profile.firstName || '');
+            const ln = encodeURIComponent(profile.lastName || '');
+            window.location.href = `login.html?welcome=1&email=${encodeURIComponent(profile.email)}&fn=${fn}&ln=${ln}&next=${next}`;
         }
     }, 1000);
 }

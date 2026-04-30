@@ -176,9 +176,15 @@
 
             <!-- Create Account Form -->
             <div class="login-form" id="formSignUp">
-                <div class="login-field">
-                    <label class="login-label" for="suName">Full Name</label>
-                    <input type="text" id="suName" class="login-input" placeholder="e.g. Chidi Okafor" autocomplete="name">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="login-field">
+                        <label class="login-label" for="suFirstName">First Name</label>
+                        <input type="text" id="suFirstName" class="login-input" placeholder="Chidi" autocomplete="given-name">
+                    </div>
+                    <div class="login-field">
+                        <label class="login-label" for="suLastName">Last Name</label>
+                        <input type="text" id="suLastName" class="login-input" placeholder="Okafor" autocomplete="family-name">
+                    </div>
                 </div>
                 <div class="login-field">
                     <label class="login-label" for="suEmail">Email Address</label>
@@ -298,15 +304,20 @@
                 // Switch to Create Account tab
                 document.getElementById('tabSignUp').click();
 
-                // Pre-fill email if passed
+                // Pre-fill email
                 const email = params.get('email');
                 if (email) {
+                    const decoded = decodeURIComponent(email);
                     const suEmail = document.getElementById('suEmail');
-                    if (suEmail) suEmail.value = decodeURIComponent(email);
-                    // Also pre-fill sign-in email in case they already have an account
+                    if (suEmail) suEmail.value = decoded;
                     const siEmail = document.getElementById('siEmail');
-                    if (siEmail) siEmail.value = decodeURIComponent(email);
+                    if (siEmail) siEmail.value = decoded;
                 }
+                // Pre-fill first/last name
+                const fn = params.get('fn');
+                const ln = params.get('ln');
+                if (fn) { const el = document.getElementById('suFirstName'); if (el) el.value = decodeURIComponent(fn); }
+                if (ln) { const el = document.getElementById('suLastName');  if (el) el.value = decodeURIComponent(ln); }
             }
         }());
 
@@ -352,14 +363,16 @@
         document.getElementById('btnSignUp').addEventListener('click', async function () {
             clearMessages();
             if (!sb) { showError('suError', 'Auth service unavailable. Please refresh.'); return; }
-            const name     = document.getElementById('suName').value.trim();
-            const email    = document.getElementById('suEmail').value.trim();
-            const password = document.getElementById('suPassword').value;
+            const firstName = document.getElementById('suFirstName').value.trim();
+            const lastName  = document.getElementById('suLastName').value.trim();
+            const name      = [firstName, lastName].filter(Boolean).join(' ');
+            const email     = document.getElementById('suEmail').value.trim();
+            const password  = document.getElementById('suPassword').value;
             if (!email || !password) { showError('suError', 'Please enter your email and a password.'); return; }
             if (password.length < 8)  { showError('suError', 'Password must be at least 8 characters.'); return; }
             setLoading('btnSignUp', true);
             const emailRedirectTo = window.location.origin + window.location.pathname;
-            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo } });
+            const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, first_name: firstName, last_name: lastName }, emailRedirectTo } });
             setLoading('btnSignUp', false);
             if (error) { showError('suError', error.message.includes('already registered') ? 'An account with this email already exists. Try signing in instead.' : error.message); return; }
             if (!data.session) { showSuccess('suSuccess', 'Almost there! Check your email and click the confirmation link, then come back to sign in.'); return; }
