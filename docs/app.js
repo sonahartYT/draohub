@@ -848,44 +848,59 @@ if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 // SUBSCRIBE SECTION — auth-gated Flutterwave payment
 // ============================================================
 
-// Check auth state and update subscribe section accordingly
+// Check auth state and update subscribe section accordingly.
+// The form is ALWAYS visible — auth state only changes the identity bar
+// and the button label, so there's never a "hidden" Subscribe button.
 async function initSubscribeSection() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const userBarEl = document.getElementById('alertUserBar');
+    const btnText   = document.getElementById('digestBtnText');
+    const note      = document.getElementById('subscribeNote');
 
-    const loggedOutEl = document.getElementById('alertLoggedOut');
-    const userBarEl   = document.getElementById('alertUserBar');
-    const formEl      = document.getElementById('alertForm');
+    if (!userBarEl) return; // not on index page
 
-    if (!loggedOutEl || !userBarEl || !formEl) return;
+    let session = null;
+    try {
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
+    } catch(e) { /* non-fatal */ }
 
     if (!session) {
-        // Not logged in — show sign-in prompt, hide form
-        loggedOutEl.style.display = 'block';
-        formEl.style.display = 'none';
+        // Logged out — hide identity bar, update button to explain login step
+        userBarEl.style.display = 'none';
+        if (btnText) btnText.textContent = 'Create Account & Subscribe →';
+        if (note)    note.textContent    = 'Free account required · takes 30 seconds · Secure payment via Flutterwave';
     } else {
-        // Logged in — show identity bar + form
-        const user  = session.user;
-        const name  = user.user_metadata?.full_name || user.user_metadata?.name || '';
-        const email = user.email || '';
+        // Logged in — show identity bar, restore button to payment label
+        const user     = session.user;
+        const name     = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        const email    = user.email || '';
         const initials = name
             ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             : email[0].toUpperCase();
 
-        document.getElementById('alertUserAvatar').textContent = initials;
-        document.getElementById('alertUserName').textContent   = name || email;
-        document.getElementById('alertUserEmail').textContent  = name ? email : '';
+        const avatarEl = document.getElementById('alertUserAvatar');
+        const nameEl   = document.getElementById('alertUserName');
+        const emailEl  = document.getElementById('alertUserEmail');
+        if (avatarEl) avatarEl.textContent = initials;
+        if (nameEl)   nameEl.textContent   = name || email;
+        if (emailEl)  emailEl.textContent  = name ? email : '';
         userBarEl.style.display = 'flex';
-        formEl.style.display    = 'block';
+        if (btnText) btnText.textContent = 'Subscribe — ₦3,000/mo';
+        if (note)    note.textContent    = 'Billed monthly · Cancel anytime · Secure payment via Flutterwave';
 
-        // Restore any saved form state from before login redirect
+        // Restore any form state saved before the login redirect
         const saved = localStorage.getItem('dh_subscribe_draft');
         if (saved) {
             try {
                 const draft = JSON.parse(saved);
-                if (draft.category)   document.getElementById('alertCategory').value   = draft.category;
-                if (draft.seniority)  document.getElementById('alertSeniority').value  = draft.seniority;
-                if (draft.location)   document.getElementById('alertLocation').value   = draft.location;
-                if (draft.background) document.getElementById('alertBackground').value = draft.background;
+                const cat = document.getElementById('alertCategory');
+                const sen = document.getElementById('alertSeniority');
+                const loc = document.getElementById('alertLocation');
+                const bg  = document.getElementById('alertBackground');
+                if (cat && draft.category)   cat.value = draft.category;
+                if (sen && draft.seniority)  sen.value = draft.seniority;
+                if (loc && draft.location)   loc.value = draft.location;
+                if (bg  && draft.background) bg.value  = draft.background;
             } catch(e) {}
             localStorage.removeItem('dh_subscribe_draft');
         }
