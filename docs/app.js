@@ -905,6 +905,7 @@ function goLoginToSubscribe() {
 }
 
 async function startDigestPayment() {
+  try {
     // Guard: Supabase must be ready
     if (!supabase) {
         alert('Still loading — please wait a moment and try again.');
@@ -968,6 +969,10 @@ async function startDigestPayment() {
             btn.disabled = false;
         },
     });
+  } catch(err) {
+      alert('Error: ' + err.message);
+      console.error('startDigestPayment error:', err);
+  }
 }
 
 async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
