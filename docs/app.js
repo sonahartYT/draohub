@@ -745,8 +745,14 @@ function initNavAuth() {
     script.onload = () => {
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            supabase.auth.getSession().then(({ data: { session } }) => updateNavAuth(session));
-            supabase.auth.onAuthStateChange((_event, session) => updateNavAuth(session));
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                updateNavAuth(session);
+                initSubscribeSection();
+            });
+            supabase.auth.onAuthStateChange((_event, session) => {
+                updateNavAuth(session);
+                initSubscribeSection();
+            });
         } catch (e) {
             console.warn('Supabase auth nav init failed:', e);
         }
@@ -851,7 +857,7 @@ if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 
 // Check auth state and update subscribe section accordingly
 async function initSubscribeSection() {
-    const { data: { session } } = await sb.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     const loggedOutEl = document.getElementById('alertLoggedOut');
     const userBarEl   = document.getElementById('alertUserBar');
@@ -907,7 +913,7 @@ function goLoginToSubscribe() {
 
 async function startDigestPayment() {
     // Guard: must be logged in
-    const { data: { session } } = await sb.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) { goLoginToSubscribe(); return; }
 
     const user          = session.user;
@@ -1013,10 +1019,7 @@ if (window.location.hash === '#subscribe') {
     }, 400);
 }
 
-// Init subscribe section on load
-if (window.supabase) {
-    initSubscribeSection();
-}
+// initSubscribeSection() is called from initNavAuth() once Supabase client is ready
 
 // ============================================================
 // BOOT
