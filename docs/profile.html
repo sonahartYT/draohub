@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .profile-main { flex: 1; padding: 48px 0 80px; }
@@ -258,6 +258,18 @@
             <div id="stateLoading" class="profile-loading">
                 <div class="profile-loading-spinner"></div>
                 <p>Loading your profile…</p>
+            </div>
+
+            <!-- Welcome banner (shown after subscription) -->
+            <div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,#142A47,#1e3d66);border-radius:14px;padding:20px 24px;margin-bottom:28px;display:none;">
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                    <div style="font-size:2rem;">🎉</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800;font-size:1rem;color:#fff;margin-bottom:4px;">Welcome to DracoHub! You're all set.</div>
+                        <div style="font-size:0.85rem;color:#8AA0B8;line-height:1.5;">Your first job snapshot is heading to your inbox. Complete your profile below so we can personalise every digest to your exact experience and preferences.</div>
+                    </div>
+                    <button onclick="document.getElementById('welcomeBanner').style.display='none'" style="background:none;border:none;color:#8AA0B8;cursor:pointer;font-size:1.2rem;line-height:1;">✕</button>
+                </div>
             </div>
 
             <!-- Authenticated view -->
@@ -751,6 +763,12 @@
                 document.getElementById('stateProfile').style.display = 'block';
                 updateCompleteness();
 
+                // Show welcome banner if redirected from subscribe flow
+                if (new URLSearchParams(window.location.search).get('welcome') === '1') {
+                    document.getElementById('welcomeBanner').style.display = 'flex';
+                    window.history.replaceState({}, '', 'profile.html');
+                }
+
             } catch (err) {
                 console.error('loadProfile error:', err);
                 document.getElementById('stateLoading').innerHTML =
@@ -862,7 +880,7 @@
                 document.getElementById('sidebarName').textContent = updates.name;
             }
 
-            // Upsert handles both existing subscribers (email/Paystack) and
+            // Upsert handles both existing subscribers (email/Flutterwave) and
             // new Google OAuth users who have no subscriber row yet.
             const { error } = await sb
                 .from('subscribers')
@@ -891,55 +909,68 @@
             window.location.href = 'index.html';
         }
 
-        // ── Paystack payment ─────────────────────────────────────
-        function openPaystack() {
+        // ── Flutterwave payment ──────────────────────────────────
+        function openFlutterwave() {
             if (!currentUser) return;
             const btn = document.getElementById('subscribeBtn');
             btn.disabled = true;
             btn.textContent = 'Loading...';
 
-            const handler = PaystackPop.setup({
-                key: 'pk_test_d2c67160d7ed8225a3f83c9528c0c72afbb5022a',
-                email: currentUser.email,
-                amount: 300000, // ₦3,000 in kobo
-                currency: 'NGN',
-                ref: 'draco_' + currentUser.id.slice(0, 8) + '_' + Date.now(),
-                metadata: { user_id: currentUser.id },
+            FlutterwaveCheckout({
+                public_key:      'FLWPUBK_TEST-0cb85e69f14033272d573902cfc31c9e-X',
+                tx_ref:          'draco_' + currentUser.id.slice(0, 8) + '_' + Date.now(),
+                amount:          3000,
+                currency:        'NGN',
+                payment_options: 'card, banktransfer, ussd',
+                customer: {
+                    email: currentUser.email,
+                    name:  currentUser.user_metadata?.full_name || '',
+                },
+                customizations: {
+                    title:       'DracoHub Weekly Digest',
+                    description: 'Monthly subscription — ₦3,000/month',
+                    logo:        'https://dracohub.co/favicon.png',
+                },
                 callback: async function(response) {
-                    btn.textContent = 'Verifying...';
-                    // Optimistically update UI while webhook processes
-                    try {
-                        const { error } = await sb
-                            .from('subscribers')
-                            .upsert(
-                                { user_id: currentUser.id, email: currentUser.email, subscription_status: 'paid', paystack_ref: response.reference },
-                                { onConflict: 'user_id', ignoreDuplicates: false }
-                            );
-                        if (!error) {
-                            document.getElementById('noSubBanner').style.display = 'none';
-                            document.getElementById('sidebarSubBadge').innerHTML = `
-                                <span class="profile-sub-badge paid">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                    Digest Active
-                                </span>`;
-                            alert('🎉 Subscription activated! You\'ll receive your first digest next Monday.');
+                    if (response.status === 'successful' || response.status === 'completed') {
+                        btn.textContent = 'Activating...';
+                        try {
+                            const { error } = await sb
+                                .from('subscribers')
+                                .upsert(
+                                    {
+                                        user_id:             currentUser.id,
+                                        email:               currentUser.email,
+                                        subscription_status: 'paid',
+                                        flw_ref:             response.tx_ref,
+                                        flw_tx_id:           String(response.transaction_id),
+                                    },
+                                    { onConflict: 'user_id', ignoreDuplicates: false }
+                                );
+                            if (!error) {
+                                document.getElementById('noSubBanner').style.display = 'none';
+                                document.getElementById('sidebarSubBadge').innerHTML = `
+                                    <span class="profile-sub-badge paid">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        Digest Active
+                                    </span>`;
+                            }
+                        } catch(e) {
+                            console.error('Post-payment update error:', e);
                         }
-                    } catch(e) {
-                        console.error('Post-payment update error:', e);
                     }
                     btn.disabled = false;
                     btn.textContent = 'Subscribe — ₦3,000/mo';
                 },
-                onClose: function() {
+                onclose: function() {
                     btn.disabled = false;
                     btn.textContent = 'Subscribe — ₦3,000/mo';
                 }
             });
-            handler.openIframe();
         }
 
         // Wire up subscribe button once DOM is ready
-        document.getElementById('subscribeBtn').addEventListener('click', openPaystack);
+        document.getElementById('subscribeBtn').addEventListener('click', openFlutterwave);
 
         // ── Boot ─────────────────────────────────────────────────
         let profileLoaded = false;

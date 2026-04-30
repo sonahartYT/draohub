@@ -930,12 +930,21 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
         console.error('Failed to save subscription:', e);
     }
 
-    // 2. Show success
+    // 2. Show success + auto-redirect to profile after 5 seconds
     alertForm.style.display = 'none';
     alertSuccess.style.display = 'flex';
-    alertSuccess.querySelector('strong').textContent = "You're subscribed!";
-    alertSuccess.querySelector('p').textContent =
-        'Your first Weekly Digest will arrive soon. Welcome aboard.';
+
+    let secs = 5;
+    const countdown = document.getElementById('redirectCountdown');
+    if (countdown) countdown.textContent = `Redirecting in ${secs}s…`;
+    const timer = setInterval(() => {
+        secs--;
+        if (countdown) countdown.textContent = secs > 0 ? `Redirecting in ${secs}s…` : '';
+        if (secs <= 0) {
+            clearInterval(timer);
+            window.location.href = `profile.html?welcome=1&email=${encodeURIComponent(profile.email)}`;
+        }
+    }, 1000);
 }
 
 // ============================================================
