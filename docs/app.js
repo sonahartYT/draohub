@@ -912,9 +912,21 @@ function goLoginToSubscribe() {
 }
 
 async function startDigestPayment() {
+    // Guard: Supabase must be ready
+    if (!supabase) {
+        alert('Still loading — please wait a moment and try again.');
+        return;
+    }
+
     // Guard: must be logged in
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { goLoginToSubscribe(); return; }
+
+    // Guard: Flutterwave must be loaded
+    if (typeof FlutterwaveCheckout === 'undefined') {
+        alert('Payment system still loading — please wait a moment and try again.');
+        return;
+    }
 
     const user          = session.user;
     const email         = user.email;
