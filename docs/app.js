@@ -8,8 +8,7 @@
 // --- Configuration ---
 const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
-const PAYSTACK_PUBLIC_KEY = 'pk_test_d2c67160d7ed8225a3f83c9528c0c72afbb5022a';
-const PAYSTACK_PLAN = 'PLN_gvf9n5tp4dbxslv';
+const FLW_PUBLIC_KEY = 'FLWPUBK_TEST-0cb85e69f14033272d573902cfc31c9e-X';
 
 const PAGE_SIZE = 12;
 const SITE_URL = window.location.origin + window.location.pathname;
@@ -847,7 +846,7 @@ const alertSuccess = document.getElementById('alertSuccess');
 if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 
 // ============================================================
-// PAYSTACK — DIGEST SUBSCRIPTION
+// FLUTTERWAVE — DIGEST SUBSCRIPTION
 // ============================================================
 function startDigestPayment() {
     const email = document.getElementById('alertEmail').value.trim();
@@ -868,41 +867,63 @@ function startDigestPayment() {
     document.getElementById('digestBtnSpinner').style.display = 'inline';
     btn.disabled = true;
 
-    const handler = PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY,
-        email,
-        plan: PAYSTACK_PLAN,
-        currency: 'NGN',
-        ref: 'DH-' + Date.now(),
-        metadata: { name, category, seniority, location_pref, background },
-        callback: async function(response) {
-            await handleDigestSuccess({ email, name, category, seniority, location_pref, background }, response.reference);
+    const tx_ref = 'DH-' + Date.now();
+
+    FlutterwaveCheckout({
+        public_key:      FLW_PUBLIC_KEY,
+        tx_ref,
+        amount:          3000,
+        currency:        'NGN',
+        payment_options: 'card, banktransfer, ussd',
+        customer: {
+            email,
+            name: name || '',
         },
-        onClose: function() {
+        meta: { category, seniority, location_pref, background },
+        customizations: {
+            title:       'DracoHub Weekly Digest',
+            description: 'Monthly subscription — ₦3,000/month',
+            logo:        'https://dracohub.co/favicon.png',
+        },
+        callback: async function(response) {
+            if (response.status === 'successful' || response.status === 'completed') {
+                await handleDigestSuccess(
+                    { email, name, category, seniority, location_pref, background },
+                    response.tx_ref,
+                    response.transaction_id
+                );
+            } else {
+                // Payment failed or cancelled inside callback
+                document.getElementById('digestBtnText').style.display = 'inline';
+                document.getElementById('digestBtnSpinner').style.display = 'none';
+                btn.disabled = false;
+            }
+        },
+        onclose: function() {
             document.getElementById('digestBtnText').style.display = 'inline';
             document.getElementById('digestBtnSpinner').style.display = 'none';
             btn.disabled = false;
         },
     });
-    handler.openIframe();
 }
 
-async function handleDigestSuccess(profile, reference) {
-    // 1. Save subscriber row immediately (payment went through — this must always succeed)
+async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
+    // 1. Save subscriber row — webhook will also confirm server-side
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
             method: 'POST',
             headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
             body: JSON.stringify({
-                email:                profile.email,
-                name:                 profile.name || null,
-                category:             profile.category || null,
-                seniority:            profile.seniority || null,
-                location_pref:        profile.location_pref || null,
-                background:           profile.background || null,
-                frequency:            'weekly',
-                subscription_status:  'paid',
-                paystack_reference:   reference,
+                email:               profile.email,
+                name:                profile.name || null,
+                category:            profile.category || null,
+                seniority:           profile.seniority || null,
+                location_pref:       profile.location_pref || null,
+                background:          profile.background || null,
+                frequency:           'weekly',
+                subscription_status: 'paid',
+                flw_ref:             flw_ref,
+                flw_tx_id:           String(flw_tx_id),
             }),
         });
     } catch (e) {
