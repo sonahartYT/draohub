@@ -130,10 +130,10 @@
         <div class="login-card">
             <a href="index.html" class="login-logo">Draco<span>Hub</span>.</a>
 
-            <!-- Welcome banner (shown after subscribing) -->
+            <!-- Banner shown when redirected from subscribe section -->
             <div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,#142A47,#1e3d66);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
-                <div style="font-weight:800;font-size:0.88rem;color:#fff;margin-bottom:4px;">🎉 Payment confirmed — you're in!</div>
-                <div style="font-size:0.78rem;color:#8AA0B8;line-height:1.5;">Create your free account below to manage your profile, personalise your digest, and track your subscription. Use the <strong style="color:#ED880D;">same email</strong> you subscribed with.</div>
+                <div style="font-weight:800;font-size:0.88rem;color:#fff;margin-bottom:4px;">Almost there! 👋</div>
+                <div style="font-size:0.78rem;color:#8AA0B8;line-height:1.5;">Sign in or create a free account to complete your subscription. We'll take you straight back to the payment step.</div>
             </div>
 
             <!-- Tabs -->
@@ -294,30 +294,15 @@
             console.error('Supabase init failed:', e);
         }
 
-        // ── Handle ?welcome=1 from subscribe flow ────────────────
+        // ── Handle ?next= redirect after login ───────────────────
+        // If coming from subscribe flow, show a nudge on the login card
         (function () {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('welcome') === '1') {
-                // Show welcome banner
+            const next   = params.get('next') || '';
+            if (next.includes('subscribe')) {
                 document.getElementById('welcomeBanner').style.display = 'block';
-
-                // Switch to Create Account tab
+                // Switch to Create Account tab if new user
                 document.getElementById('tabSignUp').click();
-
-                // Pre-fill email
-                const email = params.get('email');
-                if (email) {
-                    const decoded = decodeURIComponent(email);
-                    const suEmail = document.getElementById('suEmail');
-                    if (suEmail) suEmail.value = decoded;
-                    const siEmail = document.getElementById('siEmail');
-                    if (siEmail) siEmail.value = decoded;
-                }
-                // Pre-fill first/last name
-                const fn = params.get('fn');
-                const ln = params.get('ln');
-                if (fn) { const el = document.getElementById('suFirstName'); if (el) el.value = decodeURIComponent(fn); }
-                if (ln) { const el = document.getElementById('suLastName');  if (el) el.value = decodeURIComponent(ln); }
             }
         }());
 

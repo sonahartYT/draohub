@@ -846,26 +846,80 @@ const alertSuccess = document.getElementById('alertSuccess');
 if (alertForm) alertForm.addEventListener('submit', e => e.preventDefault());
 
 // ============================================================
-// FLUTTERWAVE — DIGEST SUBSCRIPTION
+// SUBSCRIBE SECTION — auth-gated Flutterwave payment
 // ============================================================
-function startDigestPayment() {
-    const email = document.getElementById('alertEmail').value.trim();
 
-    if (!email) {
-        document.getElementById('alertEmail').focus();
-        return;
+// Check auth state and update subscribe section accordingly
+async function initSubscribeSection() {
+    const { data: { session } } = await sb.auth.getSession();
+
+    const loggedOutEl = document.getElementById('alertLoggedOut');
+    const userBarEl   = document.getElementById('alertUserBar');
+    const formEl      = document.getElementById('alertForm');
+
+    if (!loggedOutEl || !userBarEl || !formEl) return;
+
+    if (!session) {
+        // Not logged in — show sign-in prompt, hide form
+        loggedOutEl.style.display = 'block';
+        formEl.style.display = 'none';
+    } else {
+        // Logged in — show identity bar + form
+        const user  = session.user;
+        const name  = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        const email = user.email || '';
+        const initials = name
+            ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            : email[0].toUpperCase();
+
+        document.getElementById('alertUserAvatar').textContent = initials;
+        document.getElementById('alertUserName').textContent   = name || email;
+        document.getElementById('alertUserEmail').textContent  = name ? email : '';
+        userBarEl.style.display = 'flex';
+        formEl.style.display    = 'block';
+
+        // Restore any saved form state from before login redirect
+        const saved = localStorage.getItem('dh_subscribe_draft');
+        if (saved) {
+            try {
+                const draft = JSON.parse(saved);
+                if (draft.category)   document.getElementById('alertCategory').value   = draft.category;
+                if (draft.seniority)  document.getElementById('alertSeniority').value  = draft.seniority;
+                if (draft.location)   document.getElementById('alertLocation').value   = draft.location;
+                if (draft.background) document.getElementById('alertBackground').value = draft.background;
+            } catch(e) {}
+            localStorage.removeItem('dh_subscribe_draft');
+        }
     }
+}
 
-    const firstName     = document.getElementById('alertFirstName').value.trim();
-    const lastName      = document.getElementById('alertLastName').value.trim();
-    const name          = [firstName, lastName].filter(Boolean).join(' ');
+// Save form state then redirect to login
+function goLoginToSubscribe() {
+    const draft = {
+        category:   document.getElementById('alertCategory')?.value   || '',
+        seniority:  document.getElementById('alertSeniority')?.value  || '',
+        location:   document.getElementById('alertLocation')?.value   || '',
+        background: document.getElementById('alertBackground')?.value || '',
+    };
+    localStorage.setItem('dh_subscribe_draft', JSON.stringify(draft));
+    window.location.href = 'login.html?next=' + encodeURIComponent('index.html#subscribe');
+}
+
+async function startDigestPayment() {
+    // Guard: must be logged in
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { goLoginToSubscribe(); return; }
+
+    const user          = session.user;
+    const email         = user.email;
+    const name          = user.user_metadata?.full_name || user.user_metadata?.name || '';
     const category      = document.getElementById('alertCategory').value;
     const seniority     = document.getElementById('alertSeniority').value;
     const location_pref = document.getElementById('alertLocation').value;
     const background    = document.getElementById('alertBackground').value;
 
     const btn = document.getElementById('digestBtn');
-    document.getElementById('digestBtnText').style.display = 'none';
+    document.getElementById('digestBtnText').style.display    = 'none';
     document.getElementById('digestBtnSpinner').style.display = 'inline';
     btn.disabled = true;
 
@@ -877,10 +931,7 @@ function startDigestPayment() {
         amount:          3000,
         currency:        'NGN',
         payment_options: 'card, banktransfer, ussd',
-        customer: {
-            email,
-            name: name || '',
-        },
+        customer: { email, name },
         meta: { category, seniority, location_pref, background },
         customizations: {
             title:       'DracoHub Weekly Digest',
@@ -890,19 +941,18 @@ function startDigestPayment() {
         callback: async function(response) {
             if (response.status === 'successful' || response.status === 'completed') {
                 await handleDigestSuccess(
-                    { email, name, firstName, lastName, category, seniority, location_pref, background },
+                    { email, name, user_id: user.id, category, seniority, location_pref, background },
                     response.tx_ref,
                     response.transaction_id
                 );
             } else {
-                // Payment failed or cancelled inside callback
-                document.getElementById('digestBtnText').style.display = 'inline';
+                document.getElementById('digestBtnText').style.display    = 'inline';
                 document.getElementById('digestBtnSpinner').style.display = 'none';
                 btn.disabled = false;
             }
         },
         onclose: function() {
-            document.getElementById('digestBtnText').style.display = 'inline';
+            document.getElementById('digestBtnText').style.display    = 'inline';
             document.getElementById('digestBtnSpinner').style.display = 'none';
             btn.disabled = false;
         },
@@ -910,30 +960,36 @@ function startDigestPayment() {
 }
 
 async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
-    // 1. Save subscriber row — webhook will also confirm server-side
+    // Save subscriber row with user_id already linked
     try {
-        await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
             method: 'POST',
             headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
             body: JSON.stringify({
+                user_id:             profile.user_id,
                 email:               profile.email,
-                name:                profile.name || null,
-                category:            profile.category || null,
-                seniority:           profile.seniority || null,
+                name:                profile.name   || null,
+                category:            profile.category    || null,
+                seniority:           profile.seniority   || null,
                 location_pref:       profile.location_pref || null,
-                background:          profile.background || null,
+                background:          profile.background  || null,
                 frequency:           'weekly',
                 subscription_status: 'paid',
                 flw_ref:             flw_ref,
                 flw_tx_id:           String(flw_tx_id),
             }),
         });
+        if (!resp.ok) {
+            const err = await resp.text();
+            console.error('Subscriber insert failed:', resp.status, err);
+        }
     } catch (e) {
         console.error('Failed to save subscription:', e);
     }
 
-    // 2. Show success + auto-redirect to profile after 5 seconds
-    alertForm.style.display = 'none';
+    // Show success + redirect to profile
+    alertForm.style.display    = 'none';
+    document.getElementById('alertUserBar').style.display = 'none';
     alertSuccess.style.display = 'flex';
 
     let secs = 5;
@@ -944,13 +1000,22 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
         if (countdown) countdown.textContent = secs > 0 ? `Redirecting in ${secs}s…` : '';
         if (secs <= 0) {
             clearInterval(timer);
-            // Redirect to login → create account, then on to profile with welcome banner
-            const next = encodeURIComponent('profile.html?welcome=1');
-            const fn = encodeURIComponent(profile.firstName || '');
-            const ln = encodeURIComponent(profile.lastName || '');
-            window.location.href = `login.html?welcome=1&email=${encodeURIComponent(profile.email)}&fn=${fn}&ln=${ln}&next=${next}`;
+            window.location.href = 'profile.html?welcome=1';
         }
     }, 1000);
+}
+
+// Scroll to subscribe section if redirected back after login
+if (window.location.hash === '#subscribe') {
+    setTimeout(() => {
+        const el = document.querySelector('.subscribe-card');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+}
+
+// Init subscribe section on load
+if (window.supabase) {
+    initSubscribeSection();
 }
 
 // ============================================================

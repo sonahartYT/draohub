@@ -335,23 +335,24 @@
                     </div>
                 </div>
 
+                <!-- Logged-out state -->
+                <div id="alertLoggedOut" style="display:none;text-align:center;padding:24px 0 8px;">
+                    <p style="color:rgba(255,255,255,0.75);font-size:0.9rem;margin-bottom:16px;">Sign in or create a free account first, then come back to subscribe.</p>
+                    <a href="login.html?next=index.html%23subscribe" class="btn btn-primary" style="display:inline-flex;">Sign in / Create Account →</a>
+                    <p style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:12px;">Already have an account? <a href="login.html?next=index.html%23subscribe" style="color:var(--accent);">Sign in</a></p>
+                </div>
+
+                <!-- Logged-in identity bar -->
+                <div id="alertUserBar" style="display:none;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:none;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:0.85rem;display:flex;align-items:center;justify-content:center;" id="alertUserAvatar">?</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;font-size:0.88rem;color:#fff;" id="alertUserName"></div>
+                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.55);" id="alertUserEmail"></div>
+                    </div>
+                    <a href="login.html" style="font-size:0.72rem;color:rgba(255,255,255,0.4);text-decoration:underline;">Not you?</a>
+                </div>
+
                 <form class="alert-form" id="alertForm">
-                    <div class="alert-form-row">
-                        <div class="alert-field">
-                            <label class="alert-label">First Name</label>
-                            <input type="text" id="alertFirstName" class="alert-input" placeholder="e.g. Chidi" required>
-                        </div>
-                        <div class="alert-field">
-                            <label class="alert-label">Last Name</label>
-                            <input type="text" id="alertLastName" class="alert-input" placeholder="e.g. Okafor" required>
-                        </div>
-                    </div>
-                    <div class="alert-form-row">
-                        <div class="alert-field">
-                            <label class="alert-label">Email Address</label>
-                            <input type="email" id="alertEmail" class="alert-input" placeholder="you@example.com" required>
-                        </div>
-                    </div>
                     <div class="alert-form-row">
                         <div class="alert-field">
                             <label class="alert-label">Job Category</label>
@@ -417,7 +418,7 @@
                         <span id="digestBtnText">Subscribe — ₦3,000/mo</span>
                         <span id="digestBtnSpinner" style="display:none;">Opening checkout…</span>
                     </button>
-                    <p class="subscribe-note">Billed monthly · Cancel anytime · Secure payment via Paystack</p>
+                    <p class="subscribe-note">Billed monthly · Cancel anytime · Secure payment via Flutterwave</p>
                 </form>
             </div>
         </div>
