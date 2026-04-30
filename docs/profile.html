@@ -151,15 +151,16 @@
 
         /* ── Mobile sidebar overrides ─────────────────────────────────────── */
         @media (max-width: 768px) {
-            .profile-main { padding: 24px 0 60px; }
+            .profile-main { padding: 32px 0 60px; }
 
             /* Kill sticky so the sidebar never floats over the card */
             .profile-sidebar { position: static; }
 
-            /* Compact horizontal strip: avatar left, info right */
+            /* Compact horizontal strip: avatar top-left, info right */
             .profile-avatar-wrap {
                 display: flex;
-                align-items: center;
+                flex-direction: row;
+                align-items: flex-start;   /* avatar pins to top of info column */
                 gap: 14px;
                 text-align: left;
                 margin-bottom: 0;
@@ -169,15 +170,37 @@
                 border-radius: var(--radius-lg, 16px);
             }
             .profile-avatar {
-                width: 52px; height: 52px;
-                font-size: 1.2rem;
+                width: 48px; height: 48px;
+                font-size: 1.1rem;
                 flex-shrink: 0;
                 margin: 0;
+                /* nudge down a couple px so it aligns with the name text baseline */
+                margin-top: 2px;
             }
-            .profile-avatar-info { flex: 1; min-width: 0; }
-            .profile-user-name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .profile-user-email { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .profile-sub-badge { margin-top: 6px; }
+            .profile-avatar-info {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+            }
+            .profile-user-name {
+                font-size: 0.92rem;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 2px;
+            }
+            .profile-user-email {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 4px;
+            }
+            .profile-sub-badge { margin-top: 4px; }
 
             /* Completeness bar stays inside the strip */
             .profile-completeness {
@@ -207,6 +230,8 @@
             .profile-mobile-signout:hover { color: #ef4444; }
         }
         @media (min-width: 769px) {
+            /* On desktop, profile-avatar-info is invisible as a layout box —
+               its children render as direct children of the avatar-wrap block */
             .profile-avatar-info { display: contents; }
             .profile-mobile-signout { display: none; }
         }
