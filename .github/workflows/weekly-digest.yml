@@ -41,21 +41,27 @@ jobs:
           if [ -z "$RESEND_API_KEY" ];        then echo "ERROR: RESEND_API_KEY not set"        && exit 1; fi
           if [ -z "$ANTHROPIC_API_KEY" ];     then echo "ERROR: ANTHROPIC_API_KEY not set"     && exit 1; fi
           echo "All secrets configured."
+          if [ -z "$TERMII_API_KEY" ]; then echo "INFO: TERMII_API_KEY not set — WhatsApp digest disabled"; fi
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
           ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          TERMII_API_KEY:       ${{ secrets.TERMII_API_KEY }}
 
       - name: Send weekly digest
         env:
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
-          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
-          DIGEST_FROM_EMAIL:    ${{ secrets.DIGEST_FROM_EMAIL }}
+          SUPABASE_URL:                 ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:                 ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY:         ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:               ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_API_KEY:            ${{ secrets.ANTHROPIC_API_KEY }}
+          DIGEST_FROM_EMAIL:            ${{ secrets.DIGEST_FROM_EMAIL }}
+          TERMII_API_KEY:               ${{ secrets.TERMII_API_KEY }}
+          TERMII_DEVICE_ID:             ${{ secrets.TERMII_DEVICE_ID }}
+          TERMII_TEMPLATE_PERSONALISED: ${{ secrets.TERMII_TEMPLATE_PERSONALISED }}
+          TERMII_TEMPLATE_GENERIC:      ${{ secrets.TERMII_TEMPLATE_GENERIC }}
         run: |
           FLAGS=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ];  then FLAGS="--dry-run"; fi

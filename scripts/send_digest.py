@@ -42,6 +42,11 @@ SUPABASE_KEY         = os.getenv("SUPABASE_KEY")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # bypasses RLS for server-side reads
 RESEND_API_KEY       = os.getenv("RESEND_API_KEY")
 ANTHROPIC_API_KEY    = os.getenv("ANTHROPIC_API_KEY")
+TERMII_API_KEY       = os.getenv("TERMII_API_KEY")
+TERMII_DEVICE_ID     = os.getenv("TERMII_DEVICE_ID")
+# Template IDs — create these in your Termii dashboard, then set as secrets
+TERMII_TEMPLATE_PERSONALISED = os.getenv("TERMII_TEMPLATE_PERSONALISED")
+TERMII_TEMPLATE_GENERIC      = os.getenv("TERMII_TEMPLATE_GENERIC")
 FROM_EMAIL           = os.getenv("DIGEST_FROM_EMAIL", "DracoHub Digest <digest@dracohub.com>")
 SITE_URL             = "https://sonahartyt.github.io/dracohub/"
 
@@ -118,7 +123,7 @@ def fetch_paid_subscribers() -> list[dict]:
                 "years_experience,background,open_to_relocation,willing_abroad,"
                 "employment_status,job_hunting_status,subscription_status,"
                 "nysc_status,sector_pref,company_type_pref,contract_type_pref,"
-                "notice_period,certifications"
+                "notice_period,certifications,whatsapp_number"
             ),
             "subscription_status": "eq.paid",
         },
@@ -632,6 +637,147 @@ def build_personalised_html(ranked_jobs: list[dict], sub: dict, total_this_week:
 
 
 # ---------------------------------------------------------------------------
+# Digest link storage — saves jobs to Supabase so digest.html can render them
+# ---------------------------------------------------------------------------
+
+def store_digest(sub: dict, jobs: list[dict], is_personalised: bool, week: str) -> str | None:
+    """
+    Insert a digest record into the `digests` table.
+    Returns the UUID string, or None on failure.
+    The returned ID is used as the WhatsApp CTA link:
+        {SITE_URL}digest.html?id={uuid}
+    """
+    name = sub.get("name") or ""
+    first_name = name.split()[0] if name else "there"
+
+    # Strip internal fields not needed on the viewer page
+    clean_jobs = []
+    for j in jobs:
+        clean_jobs.append({
+            "job_title":  j.get("job_title"),
+            "company":    j.get("company"),
+            "location":   j.get("location"),
+            "apply_url":  j.get("apply_url"),
+            "tags":       j.get("tags"),
+            "_reason":    j.get("_reason", ""),
+        })
+
+    payload = {
+        "subscriber_email": sub.get("email"),
+        "week_label":       week,
+        "first_name":       first_name,
+        "is_personalised":  is_personalised,
+        "jobs":             clean_jobs,
+    }
+
+    resp = requests.post(
+        f"{SUPABASE_URL}/rest/v1/digests",
+        headers={**service_headers(), "Prefer": "return=representation"},
+        json=payload,
+        timeout=15,
+    )
+
+    if resp.status_code in (200, 201):
+        data = resp.json()
+        if data and isinstance(data, list):
+            return data[0].get("id")
+    logger.error("Failed to store digest for %s: %s %s",
+                 sub.get("email"), resp.status_code, resp.text[:200])
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Termii — WhatsApp delivery
+# ---------------------------------------------------------------------------
+
+def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
+                      digest_id: str | None, is_personalised: bool,
+                      dry_run: bool = False) -> bool:
+    """
+    Send the weekly digest via Termii WhatsApp template message.
+
+    Templates required in Termii dashboard:
+      Personalised — template name: dracohub_weekly_digest
+        Variables: name, count, title1, company1, title2, company2, title3, company3, url_suffix
+      Generic — template name: dracohub_weekly_general
+        Variables: count, companies, url_suffix
+    """
+    if not TERMII_API_KEY or not TERMII_DEVICE_ID:
+        logger.warning("Termii not configured — skipping WhatsApp for %s", phone)
+        return False
+
+    # Normalise phone: strip leading + or 0, ensure starts with country code
+    clean_phone = phone.strip().lstrip("+")
+    if clean_phone.startswith("0"):
+        clean_phone = "234" + clean_phone[1:]
+
+    # URL suffix for the digest CTA button
+    url_suffix = f"digest.html?id={digest_id}" if digest_id else ""
+
+    if is_personalised:
+        if not TERMII_TEMPLATE_PERSONALISED:
+            logger.warning("TERMII_TEMPLATE_PERSONALISED not set — skipping WhatsApp")
+            return False
+
+        name = (sub.get("name") or "").split()[0] or "there"
+        top3 = jobs[:3]
+        while len(top3) < 3:   # pad if fewer than 3 matched
+            top3.append({"job_title": "—", "company": "—"})
+
+        template_data = {
+            "name":     name,
+            "count":    str(len(jobs)),
+            "title1":   top3[0].get("job_title", "—")[:40],
+            "company1": top3[0].get("company", "—")[:30],
+            "title2":   top3[1].get("job_title", "—")[:40],
+            "company2": top3[1].get("company", "—")[:30],
+            "title3":   top3[2].get("job_title", "—")[:40],
+            "company3": top3[2].get("company", "—")[:30],
+            "url_suffix": url_suffix,
+        }
+        template_id = TERMII_TEMPLATE_PERSONALISED
+    else:
+        if not TERMII_TEMPLATE_GENERIC:
+            logger.warning("TERMII_TEMPLATE_GENERIC not set — skipping WhatsApp")
+            return False
+
+        companies = len({j.get("company") for j in jobs if j.get("company")})
+        template_data = {
+            "count":     str(len(jobs)),
+            "companies": str(companies),
+            "url_suffix": url_suffix,
+        }
+        template_id = TERMII_TEMPLATE_GENERIC
+
+    if dry_run:
+        logger.info("[DRY RUN] WhatsApp to %s via template %s: %s",
+                    clean_phone, template_id, template_data)
+        return True
+
+    resp = requests.post(
+        "https://api.ng.termii.com/api/send/template",
+        json={
+            "phone_number": clean_phone,
+            "device_id":    TERMII_DEVICE_ID,
+            "template_id":  template_id,
+            "api_key":      TERMII_API_KEY,
+            "data":         template_data,
+        },
+        timeout=30,
+    )
+
+    if resp.status_code in (200, 201):
+        result = resp.json()
+        if result.get("code") == "ok":
+            logger.info("✓ WhatsApp sent to %s (balance: %s)", clean_phone, result.get("balance"))
+            return True
+        logger.error("Termii rejected WhatsApp for %s: %s", clean_phone, result)
+    else:
+        logger.error("Termii HTTP error for %s: %s %s", clean_phone, resp.status_code, resp.text[:200])
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Resend — email delivery
 # ---------------------------------------------------------------------------
 
@@ -726,7 +872,9 @@ def main():
     # 5. Send to each subscriber
     sent_personalised = 0
     sent_generic      = 0
+    sent_whatsapp     = 0
     failed            = 0
+    week              = week_label()
 
     for sub in subscribers:
         email = sub.get("email")
@@ -737,27 +885,45 @@ def main():
         try:
             if is_profile_complete(sub):
                 # Two-stage personalised path
-                filtered = prefilter_jobs(all_jobs, sub)
-                ranked   = rank_jobs_with_claude(filtered, sub)
-                html     = build_personalised_html(ranked, sub, len(all_jobs))
-                subject  = f"Your {len(ranked)} matched O&G roles this week — DracoHub"
-                label    = "personalised"
+                filtered        = prefilter_jobs(all_jobs, sub)
+                ranked          = rank_jobs_with_claude(filtered, sub)
+                html            = build_personalised_html(ranked, sub, len(all_jobs))
+                subject         = f"Your {len(ranked)} matched O&G roles this week — DracoHub"
+                label           = "personalised"
+                digest_jobs     = ranked
+                is_personalised = True
             else:
                 # Generic fallback — with nudge for paid subscribers who haven't completed their profile
-                html    = build_generic_html(selected_generic, len(all_jobs), is_paid_incomplete=True)
-                subject = generic_subject
-                label   = "generic (incomplete profile)"
+                generic_jobs    = [j for jobs in selected_generic.values() for j in jobs]
+                html            = build_generic_html(selected_generic, len(all_jobs), is_paid_incomplete=True)
+                subject         = generic_subject
+                label           = "generic (incomplete profile)"
+                digest_jobs     = generic_jobs
+                is_personalised = False
 
-            success = send_via_resend(email, subject, html, dry_run=args.dry_run)
+            # Store digest for the web viewer page (used by WhatsApp CTA link)
+            digest_id = store_digest(sub, digest_jobs, is_personalised, week)
 
-            if success:
-                logger.info("✓ %s → %s (%s)", email, subject[:50], label)
-                if label.startswith("personalised"):
+            # ── Email ──
+            email_ok = send_via_resend(email, subject, html, dry_run=args.dry_run)
+            if email_ok:
+                logger.info("✓ email  → %s (%s)", email, label)
+                if is_personalised:
                     sent_personalised += 1
                 else:
                     sent_generic += 1
             else:
                 failed += 1
+
+            # ── WhatsApp (if number on file) ──
+            wa_number = sub.get("whatsapp_number")
+            if wa_number and digest_id:
+                wa_ok = send_via_whatsapp(
+                    wa_number, sub, digest_jobs, digest_id,
+                    is_personalised, dry_run=args.dry_run
+                )
+                if wa_ok:
+                    sent_whatsapp += 1
 
         except Exception as e:
             logger.error("Error processing %s: %s", email, e)
@@ -775,8 +941,8 @@ def main():
                 failed += 1
 
     logger.info("=" * 60)
-    logger.info("Done. Personalised: %d | Generic: %d | Failed: %d",
-                sent_personalised, sent_generic, failed)
+    logger.info("Done. Personalised: %d | Generic: %d | WhatsApp: %d | Failed: %d",
+                sent_personalised, sent_generic, sent_whatsapp, failed)
     logger.info("=" * 60)
 
     if failed > 0:

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Weekly Digest — DracoHub Careers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-alt); }
+
+        /* ── Header ── */
+        .digest-header {
+            background: var(--navy);
+            padding: 28px 24px 24px;
+            text-align: center;
+        }
+        .digest-logo {
+            font-family: var(--font-primary);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 18px;
+            letter-spacing: -0.3px;
+        }
+        .digest-logo span { color: var(--accent); }
+        .digest-week-pill {
+            display: inline-block;
+            background: rgba(237,136,13,0.18);
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+        .digest-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+        .digest-subtitle {
+            font-size: 0.88rem;
+            color: #8AA0B8;
+            line-height: 1.5;
+        }
+
+        /* ── Stats bar ── */
+        .digest-stats {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+        }
+        .digest-stat {
+            flex: 1;
+            padding: 14px 8px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .digest-stat:last-child { border-right: none; }
+        .digest-stat-num {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--accent);
+            display: block;
+            line-height: 1.1;
+        }
+        .digest-stat-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: block;
+            margin-top: 3px;
+        }
+
+        /* ── Jobs list ── */
+        .digest-body { flex: 1; max-width: 640px; margin: 0 auto; width: 100%; padding: 0 0 80px; }
+
+        .digest-section-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            padding: 18px 20px 6px;
+        }
+
+        .digest-job {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .digest-job:first-of-type { border-top: 1px solid var(--border); }
+
+        .digest-job-info { flex: 1; min-width: 0; }
+        .digest-job-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+            line-height: 1.35;
+        }
+        .digest-job-company {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        .digest-job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .digest-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: var(--bg-alt);
+            color: var(--text-muted);
+        }
+        .digest-tag.accent { background: rgba(237,136,13,0.1); color: var(--accent); }
+        .digest-reason {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        .digest-reason::before { content: '✓ '; }
+        .digest-apply {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .digest-apply:hover { background: var(--accent-hover); }
+
+        /* ── CTA footer ── */
+        .digest-cta {
+            background: #fff;
+            border-top: 2px solid var(--border);
+            padding: 28px 20px;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .digest-cta h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+        .digest-cta p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+        .digest-cta .btn { display: inline-flex; padding: 12px 28px; font-size: 0.9rem; font-weight: 700; }
+
+        /* ── States ── */
+        .digest-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 80px 24px; text-align: center; flex: 1;
+        }
+        .digest-state-icon { font-size: 2.5rem; margin-bottom: 14px; }
+        .digest-state h2 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .digest-state p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; max-width: 300px; }
+        .digest-spinner {
+            width: 36px; height: 36px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.7s linear infinite; margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Footer ── */
+        .digest-footer {
+            background: var(--bg-alt);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .digest-footer a { color: var(--text-muted); text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- Loading state -->
+    <div id="stateLoading" class="digest-state">
+        <div class="digest-spinner"></div>
+        <p>Loading your digest…</p>
+    </div>
+
+    <!-- Expired / not found state -->
+    <div id="stateNotFound" style="display:none;" class="digest-state">
+        <div class="digest-state-icon">📭</div>
+        <h2>Digest not found</h2>
+        <p>This digest link may have expired (links are valid for 7 days) or doesn't exist.</p>
+        <a href="index.html" class="btn btn-primary" style="margin-top:20px;">Browse All Jobs</a>
+    </div>
+
+    <!-- Digest content -->
+    <div id="stateDigest" style="display:none;">
+
+        <!-- Header -->
+        <div class="digest-header">
+            <a href="index.html" class="digest-logo">Draco<span>Hub</span>.</a>
+            <div class="digest-week-pill" id="digestWeek"></div>
+            <div class="digest-title" id="digestTitle"></div>
+            <div class="digest-subtitle" id="digestSubtitle"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="digest-stats">
+            <div class="digest-stat">
+                <span class="digest-stat-num" id="statMatches">—</span>
+                <span class="digest-stat-label" id="statMatchesLabel">Roles</span>
+            </div>
+            <div class="digest-stat" id="statAiBlock">
+                <span class="digest-stat-num">AI</span>
+                <span class="digest-stat-label">Ranked</span>
+            </div>
+            <div class="digest-stat">
+                <span class="digest-stat-num" id="statExpiry">7d</span>
+                <span class="digest-stat-label">Link Valid</span>
+            </div>
+        </div>
+
+        <!-- Jobs -->
+        <div class="digest-body">
+            <div class="digest-section-label" id="digestSectionLabel">Your matched roles</div>
+            <div id="digestJobs"></div>
+
+            <!-- CTA -->
+            <div class="digest-cta">
+                <h3>See all listings on the board</h3>
+                <p>Search, filter, and find more roles that fit your profile.</p>
+                <a href="index.html" class="btn btn-primary">Browse All Jobs →</a>
+            </div>
+        </div>
+
+        <div class="digest-footer">
+            You received this because you have an active DracoHub subscription.<br>
+            <a href="profile.html">Manage your profile</a>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
+
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function daysUntil(isoDate) {
+            const ms = new Date(isoDate) - new Date();
+            return Math.max(0, Math.ceil(ms / 86400000));
+        }
+
+        function renderJob(job) {
+            const title    = escapeHtml(job.job_title || 'Untitled');
+            const company  = escapeHtml(job.company   || 'Company not listed');
+            const location = escapeHtml(job.location  || '');
+            const url      = escapeHtml(job.apply_url || 'index.html');
+            const tags     = job.tags || {};
+            const seniority = escapeHtml(tags.seniority || '');
+            const empType   = escapeHtml(tags.employment_type || '');
+            const reason    = escapeHtml(job._reason || '');
+
+            const locationHtml = location
+                ? `<span class="digest-tag">${location}</span>` : '';
+            const seniorityHtml = seniority && seniority !== 'Mid-Level'
+                ? `<span class="digest-tag">${seniority}</span>` : '';
+            const empHtml = empType && empType !== 'Full-time'
+                ? `<span class="digest-tag accent">${empType}</span>` : '';
+            const reasonHtml = reason
+                ? `<div class="digest-reason">${reason}</div>` : '';
+
+            return `
+                <div class="digest-job">
+                    <div class="digest-job-info">
+                        <div class="digest-job-title">${title}</div>
+                        <div class="digest-job-company">${company}</div>
+                        <div class="digest-job-meta">
+                            ${locationHtml}${seniorityHtml}${empHtml}
+                        </div>
+                        ${reasonHtml}
+                    </div>
+                    <a href="${url}" target="_blank" rel="noopener" class="digest-apply">Apply</a>
+                </div>`;
+        }
+
+        async function loadDigest() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+
+            if (!id) {
+                document.getElementById('stateLoading').style.display = 'none';
+                document.getElementById('stateNotFound').style.display = 'flex';
+                return;
+            }
+
+            const { data, error } = await sb
+                .from('digests')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            document.getElementById('stateLoading').style.display = 'none';
+
+            if (error || !data) {
+                document.getElementById('stateNotFound').style.display = 'flex';
+                return;
+            }
+
+            // Check expiry
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                document.getElementById('stateNotFound').style.display = 'flex';
+                return;
+            }
+
+            // Populate header
+            const name  = data.first_name || 'there';
+            const jobs  = data.jobs || [];
+            const week  = data.week_label || '';
+            const isPersonalised = data.is_personalised;
+
+            document.getElementById('digestWeek').textContent = week;
+            document.getElementById('digestTitle').textContent =
+                isPersonalised ? `Hi ${name}, your matched roles are here.` : 'Your weekly O&G digest is here.';
+            document.getElementById('digestSubtitle').textContent =
+                isPersonalised
+                    ? `We found ${jobs.length} roles matched to your profile this week.`
+                    : `${jobs.length} curated O&G roles from across Nigeria's top platforms.`;
+
+            // Stats
+            document.getElementById('statMatches').textContent = jobs.length;
+            document.getElementById('statMatchesLabel').textContent =
+                isPersonalised ? 'Matched Roles' : 'Curated Roles';
+            if (!isPersonalised) {
+                document.getElementById('statAiBlock').style.display = 'none';
+            }
+            const daysLeft = daysUntil(data.expires_at);
+            document.getElementById('statExpiry').textContent = `${daysLeft}d`;
+
+            document.getElementById('digestSectionLabel').textContent =
+                isPersonalised ? 'Your matched roles' : 'This week\'s top picks';
+
+            // Render jobs
+            const container = document.getElementById('digestJobs');
+            container.innerHTML = jobs.map(renderJob).join('');
+
+            // Set page title
+            document.title = isPersonalised
+                ? `Your ${jobs.length} matched O&G roles — DracoHub`
+                : `DracoHub Weekly Digest — ${week}`;
+
+            document.getElementById('stateDigest').style.display = 'block';
+        }
+
+        loadDigest();
+
+    }());
+    </script>
+</body>
+</html>
