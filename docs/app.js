@@ -737,21 +737,46 @@ async function navSignOut() {
     updateNavAuth(null);
 }
 
-function initNavAuth() {
-    // Supabase CDN is loaded in <head> — initialise client directly
+function tryInitSupabase() {
+    if (supabase) return true;
+    if (!window.supabase) return false;
     try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            updateNavAuth(session);
-            initSubscribeSection();
-        });
-        supabase.auth.onAuthStateChange((_event, session) => {
-            updateNavAuth(session);
-            initSubscribeSection();
-        });
-    } catch (e) {
-        console.warn('Supabase auth init failed:', e);
+        return true;
+    } catch(e) {
+        console.warn('Supabase createClient failed:', e);
+        return false;
     }
+}
+
+function initNavAuth() {
+    if (!tryInitSupabase()) {
+        // CDN not ready yet — retry once after 1 second
+        setTimeout(function() {
+            if (tryInitSupabase()) {
+                wireSupabaseListeners();
+            } else {
+                console.warn('Supabase CDN still not available after retry — nav auth disabled');
+            }
+        }, 1000);
+        return;
+    }
+    wireSupabaseListeners();
+}
+
+function wireSupabaseListeners() {
+    supabase.auth.getSession().then(function(result) {
+        const session = result?.data?.session || null;
+        updateNavAuth(session);
+        initSubscribeSection();
+    }).catch(function() {
+        updateNavAuth(null);
+        initSubscribeSection();
+    });
+    supabase.auth.onAuthStateChange(function(_event, session) {
+        updateNavAuth(session);
+        initSubscribeSection();
+    });
 }
 
 // ============================================================
@@ -931,14 +956,23 @@ function goLoginToSubscribe() {
 
 async function startDigestPayment() {
   try {
-    // Try to get session — if Supabase isn't ready or there's no session, go to login
-    let session = null;
-    if (supabase) {
-        try {
-            const { data } = await supabase.auth.getSession();
-            session = data?.session || null;
-        } catch(e) { /* fall through to login redirect */ }
+    // Try to init Supabase now if it wasn't ready at page load (CDN slowness)
+    if (!supabase) tryInitSupabase();
+
+    // If Supabase is still unavailable (CDN completely failed), show a message
+    // and DO NOT redirect — that would cause a bounce loop for logged-in users
+    if (!supabase) {
+        alert('Auth service still loading — please wait a moment and try again.');
+        return;
     }
+
+    // Try to get session
+    let session = null;
+    try {
+        const { data } = await supabase.auth.getSession();
+        session = data?.session || null;
+    } catch(e) { /* fall through to login redirect */ }
+
     if (!session) { goLoginToSubscribe(); return; }
 
     // Guard: Flutterwave must be loaded
