@@ -938,25 +938,48 @@
                     if (response.status === 'successful' || response.status === 'completed') {
                         btn.textContent = 'Activating...';
                         try {
-                            const { error } = await sb
+                            // Check if subscriber row already exists
+                            const { data: existing } = await sb
                                 .from('subscribers')
-                                .upsert(
-                                    {
+                                .select('id')
+                                .eq('user_id', currentUser.id)
+                                .limit(1);
+
+                            let saveError = null;
+                            if (existing && existing.length > 0) {
+                                // Update existing row
+                                const { error } = await sb
+                                    .from('subscribers')
+                                    .update({
+                                        subscription_status: 'paid',
+                                        flw_ref:   response.tx_ref,
+                                        flw_tx_id: String(response.transaction_id),
+                                    })
+                                    .eq('user_id', currentUser.id);
+                                saveError = error;
+                            } else {
+                                // Insert new row
+                                const { error } = await sb
+                                    .from('subscribers')
+                                    .insert({
                                         user_id:             currentUser.id,
                                         email:               currentUser.email,
                                         subscription_status: 'paid',
                                         flw_ref:             response.tx_ref,
                                         flw_tx_id:           String(response.transaction_id),
-                                    },
-                                    { onConflict: 'user_id', ignoreDuplicates: false }
-                                );
-                            if (!error) {
+                                    });
+                                saveError = error;
+                            }
+
+                            if (!saveError) {
                                 document.getElementById('noSubBanner').style.display = 'none';
                                 document.getElementById('sidebarSubBadge').innerHTML = `
                                     <span class="profile-sub-badge paid">
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                         Digest Active
                                     </span>`;
+                            } else {
+                                console.error('Post-payment update error:', saveError.message);
                             }
                         } catch(e) {
                             console.error('Post-payment update error:', e);
