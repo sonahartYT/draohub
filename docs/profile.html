@@ -722,7 +722,24 @@
                     .limit(1);
 
                 if (fetchError) console.warn('Subscriber fetch error:', fetchError.message);
-                const sub = rows?.[0] || null;
+                let sub = rows?.[0] || null;
+
+                // No row yet — first sign-in. Create a minimal subscriber record
+                // so the profile can be saved and subscription can be tracked.
+                if (!sub) {
+                    const authName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || null;
+                    const { data: newRow, error: createError } = await sb
+                        .from('subscribers')
+                        .insert({
+                            user_id: currentUser.id,
+                            email:   currentUser.email,
+                            name:    authName,
+                        })
+                        .select()
+                        .single();
+                    if (!createError) sub = newRow;
+                    else console.warn('Could not create subscriber row:', createError.message);
+                }
 
                 // Sidebar
                 const name = sub?.name || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
