@@ -257,8 +257,9 @@
             });
         };
         window._dhLogin.redirectAfterLogin = function() {
-            const next = new URLSearchParams(window.location.search).get('next');
-            window.location.href = next || 'profile.html';
+            // Always go to profile after sign-in — sending users back to the
+            // subscribe section was confusing. They can subscribe from profile.
+            window.location.href = 'profile.html';
         };
 
         // Tab switching — works immediately
@@ -341,10 +342,9 @@
                 sb.auth.getSession().then(function (res) {
                     if (res.data && res.data.session) {
                         var email   = res.data.session.user.email || '';
-                        var nextUrl = new URLSearchParams(window.location.search).get('next') || 'profile.html';
                         h.showSuccess('siSuccess',
                             'You\'re already signed in' + (email ? ' as <strong>' + email + '</strong>' : '') + '. ' +
-                            '<a href="' + nextUrl + '" style="color:var(--accent);font-weight:600;">Continue →</a> ' +
+                            '<a href="profile.html" style="color:var(--accent);font-weight:600;">Go to my profile →</a> ' +
                             'or <span id="btnAutoSignOut" style="color:var(--accent);cursor:pointer;font-weight:600;">sign out</span> to use a different account.'
                         );
                         setTimeout(function () {
