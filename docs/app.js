@@ -1041,42 +1041,27 @@ async function startDigestPayment() {
 }
 
 async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
-    // Update subscription status using the authenticated Supabase JS client.
-    // We do UPDATE first (row already exists from claim_subscriber), falling
-    // back to INSERT if no row exists yet. Avoids upsert/onConflict which
-    // requires a unique constraint and was returning 400.
     try {
-        // Check if a subscriber row already exists for this user
-        const { data: existing } = await supabase
-            .from('subscribers')
-            .select('id')
-            .eq('user_id', profile.user_id)
-            .limit(1);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
 
-        if (existing && existing.length > 0) {
-            // Row exists — update only subscription_status (safest: avoids
-            // columns that may not exist like flw_ref / flw_tx_id)
-            const { error } = await supabase
-                .from('subscribers')
-                .update({ subscription_status: 'paid' })
-                .eq('user_id', profile.user_id);
-            if (error) console.error('Subscriber update failed:', error.message);
-        } else {
-            // No row yet — insert a minimal record (no flw columns that may not exist)
-            const { error } = await supabase
-                .from('subscribers')
-                .insert({
-                    user_id:             profile.user_id,
-                    email:               profile.email,
-                    name:                profile.name        || null,
-                    category:            profile.category    || null,
-                    seniority:           profile.seniority   || null,
-                    location_pref:       profile.location_pref || null,
-                    background:          profile.background  || null,
-                    subscription_status: 'paid',
-                });
-            if (error) console.error('Subscriber insert failed:', error.message);
-        }
+        const { error } = await supabase
+            .from('subscribers')
+            .upsert({
+                user_id:                profile.user_id,
+                email:                  profile.email,
+                name:                   profile.name        || null,
+                category:               profile.category    || null,
+                seniority:              profile.seniority   || null,
+                location_pref:          profile.location_pref || null,
+                background:             profile.background  || null,
+                subscription_status:    'paid',
+                flw_ref:                flw_ref,
+                flw_tx_id:              String(flw_tx_id),
+                subscription_expires_at: expiresAt.toISOString(),
+            }, { onConflict: 'user_id', ignoreDuplicates: false });
+
+        if (error) console.error('Subscriber upsert failed:', error.message);
     } catch (e) {
         console.error('Failed to save subscription:', e);
     }

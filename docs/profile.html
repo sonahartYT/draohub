@@ -683,6 +683,24 @@
             }
         })();
 
+        // ── Subscription badge renderer ──────────────────────────
+        function renderSubBadge(status, expiresAt) {
+            if (status !== 'paid') {
+                return `<span class="profile-sub-badge unpaid">No subscription</span>`;
+            }
+            let expiry = '';
+            if (expiresAt) {
+                const d = new Date(expiresAt);
+                if (!isNaN(d)) {
+                    expiry = ' · renews ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                }
+            }
+            return `<span class="profile-sub-badge paid">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Digest Active${expiry}
+            </span>`;
+        }
+
         // ── Load profile ─────────────────────────────────────────
         async function loadProfile(session) {
             try {
@@ -718,10 +736,7 @@
                 // Subscription badge
                 const badgeEl = document.getElementById('sidebarSubBadge');
                 if (sub?.subscription_status === 'paid') {
-                    badgeEl.innerHTML = `<span class="profile-sub-badge paid">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        Digest Active
-                    </span>`;
+                    badgeEl.innerHTML = renderSubBadge('paid', sub.subscription_expires_at);
                 } else {
                     badgeEl.innerHTML = `<span class="profile-sub-badge unpaid">No subscription</span>`;
                     document.getElementById('noSubBanner').style.display = 'flex';
@@ -938,43 +953,26 @@
                     if (response.status === 'successful' || response.status === 'completed') {
                         btn.textContent = 'Activating...';
                         try {
-                            // Check if subscriber row already exists
-                            const { data: existing } = await sb
+                            const expiresAt = new Date();
+                            expiresAt.setDate(expiresAt.getDate() + 30);
+
+                            const { error } = await sb
                                 .from('subscribers')
-                                .select('id')
-                                .eq('user_id', currentUser.id)
-                                .limit(1);
+                                .upsert({
+                                    user_id:                 currentUser.id,
+                                    email:                   currentUser.email,
+                                    subscription_status:     'paid',
+                                    flw_ref:                 response.tx_ref,
+                                    flw_tx_id:               String(response.transaction_id),
+                                    subscription_expires_at: expiresAt.toISOString(),
+                                }, { onConflict: 'user_id', ignoreDuplicates: false });
 
-                            let saveError = null;
-                            if (existing && existing.length > 0) {
-                                // Update existing row — only subscription_status,
-                                // avoids columns that may not exist (flw_ref etc.)
-                                const { error } = await sb
-                                    .from('subscribers')
-                                    .update({ subscription_status: 'paid' })
-                                    .eq('user_id', currentUser.id);
-                                saveError = error;
-                            } else {
-                                // Insert minimal new row
-                                const { error } = await sb
-                                    .from('subscribers')
-                                    .insert({
-                                        user_id:             currentUser.id,
-                                        email:               currentUser.email,
-                                        subscription_status: 'paid',
-                                    });
-                                saveError = error;
-                            }
-
-                            if (!saveError) {
+                            if (!error) {
                                 document.getElementById('noSubBanner').style.display = 'none';
-                                document.getElementById('sidebarSubBadge').innerHTML = `
-                                    <span class="profile-sub-badge paid">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                        Digest Active
-                                    </span>`;
+                                document.getElementById('sidebarSubBadge').innerHTML =
+                                    renderSubBadge('paid', expiresAt.toISOString());
                             } else {
-                                console.error('Post-payment update error:', saveError.message);
+                                console.error('Post-payment update error:', error.message);
                             }
                         } catch(e) {
                             console.error('Post-payment update error:', e);
