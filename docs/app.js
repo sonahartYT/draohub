@@ -1041,15 +1041,15 @@ async function startDigestPayment() {
 }
 
 async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
-    // Save subscriber row with user_id already linked
+    // Save subscriber row using the authenticated Supabase JS client so the
+    // user's JWT is included — raw fetch with anon key is blocked by RLS.
     try {
-        const resp = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
-            method: 'POST',
-            headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify({
+        const { error } = await supabase
+            .from('subscribers')
+            .upsert({
                 user_id:             profile.user_id,
                 email:               profile.email,
-                name:                profile.name   || null,
+                name:                profile.name        || null,
                 category:            profile.category    || null,
                 seniority:           profile.seniority   || null,
                 location_pref:       profile.location_pref || null,
@@ -1058,11 +1058,11 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
                 subscription_status: 'paid',
                 flw_ref:             flw_ref,
                 flw_tx_id:           String(flw_tx_id),
-            }),
-        });
-        if (!resp.ok) {
-            const err = await resp.text();
-            console.error('Subscriber insert failed:', resp.status, err);
+            }, { onConflict: 'user_id', ignoreDuplicates: false });
+
+        if (error) {
+            console.error('Subscriber upsert failed:', error.message);
+            // Even if save failed, still redirect — user can re-subscribe from profile
         }
     } catch (e) {
         console.error('Failed to save subscription:', e);
