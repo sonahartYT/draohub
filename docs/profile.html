@@ -947,26 +947,21 @@
 
                             let saveError = null;
                             if (existing && existing.length > 0) {
-                                // Update existing row
+                                // Update existing row — only subscription_status,
+                                // avoids columns that may not exist (flw_ref etc.)
                                 const { error } = await sb
                                     .from('subscribers')
-                                    .update({
-                                        subscription_status: 'paid',
-                                        flw_ref:   response.tx_ref,
-                                        flw_tx_id: String(response.transaction_id),
-                                    })
+                                    .update({ subscription_status: 'paid' })
                                     .eq('user_id', currentUser.id);
                                 saveError = error;
                             } else {
-                                // Insert new row
+                                // Insert minimal new row
                                 const { error } = await sb
                                     .from('subscribers')
                                     .insert({
                                         user_id:             currentUser.id,
                                         email:               currentUser.email,
                                         subscription_status: 'paid',
-                                        flw_ref:             response.tx_ref,
-                                        flw_tx_id:           String(response.transaction_id),
                                     });
                                 saveError = error;
                             }

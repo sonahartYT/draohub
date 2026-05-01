@@ -1054,18 +1054,15 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
             .limit(1);
 
         if (existing && existing.length > 0) {
-            // Row exists — update only the payment fields
+            // Row exists — update only subscription_status (safest: avoids
+            // columns that may not exist like flw_ref / flw_tx_id)
             const { error } = await supabase
                 .from('subscribers')
-                .update({
-                    subscription_status: 'paid',
-                    flw_ref:             flw_ref,
-                    flw_tx_id:           String(flw_tx_id),
-                })
+                .update({ subscription_status: 'paid' })
                 .eq('user_id', profile.user_id);
             if (error) console.error('Subscriber update failed:', error.message);
         } else {
-            // No row yet — insert a minimal record
+            // No row yet — insert a minimal record (no flw columns that may not exist)
             const { error } = await supabase
                 .from('subscribers')
                 .insert({
@@ -1077,8 +1074,6 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
                     location_pref:       profile.location_pref || null,
                     background:          profile.background  || null,
                     subscription_status: 'paid',
-                    flw_ref:             flw_ref,
-                    flw_tx_id:           String(flw_tx_id),
                 });
             if (error) console.error('Subscriber insert failed:', error.message);
         }
