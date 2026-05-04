@@ -671,7 +671,7 @@ function clearCollection() {
 // AUTH — NAV STATE (index.html only, non-blocking)
 // Supabase CDN is injected dynamically so it NEVER blocks jobs.
 // ============================================================
-let supabase = null;
+let sb = null;
 
 function updateNavAuth(session) {
     const navAuth = document.getElementById('navAuth');
@@ -733,15 +733,15 @@ function updateNavAuth(session) {
 }
 
 async function navSignOut() {
-    if (supabase) await supabase.auth.signOut();
+    if (sb) await sb.auth.signOut();
     updateNavAuth(null);
 }
 
 function tryInitSupabase() {
-    if (supabase) return true;
+    if (sb) return true;
     if (!window.supabase) return false;
     try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         return true;
     } catch(e) {
         console.warn('Supabase createClient failed:', e);
@@ -765,7 +765,7 @@ function initNavAuth() {
 }
 
 function wireSupabaseListeners() {
-    supabase.auth.getSession().then(function(result) {
+    sb.auth.getSession().then(function(result) {
         const session = result?.data?.session || null;
         updateNavAuth(session);
         initSubscribeSection();
@@ -773,7 +773,7 @@ function wireSupabaseListeners() {
         updateNavAuth(null);
         initSubscribeSection();
     });
-    supabase.auth.onAuthStateChange(function(_event, session) {
+    sb.auth.onAuthStateChange(function(_event, session) {
         updateNavAuth(session);
         initSubscribeSection();
     });
@@ -895,7 +895,7 @@ async function initSubscribeSection() {
 
     let session = null;
     try {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await sb.auth.getSession();
         session = data.session;
     } catch(e) { /* non-fatal */ }
 
@@ -963,11 +963,11 @@ function goLoginToSubscribe() {
 async function startDigestPayment() {
   try {
     // Try to init Supabase now if it wasn't ready at page load (CDN slowness)
-    if (!supabase) tryInitSupabase();
+    if (!sb) tryInitSupabase();
 
     // If Supabase is still unavailable (CDN completely failed), show a message
     // and DO NOT redirect — that would cause a bounce loop for logged-in users
-    if (!supabase) {
+    if (!sb) {
         alert('Auth service still loading — please wait a moment and try again.');
         return;
     }
@@ -975,7 +975,7 @@ async function startDigestPayment() {
     // Try to get session
     let session = null;
     try {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await sb.auth.getSession();
         session = data?.session || null;
     } catch(e) { /* fall through to login redirect */ }
 
@@ -1045,7 +1045,7 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        const { error } = await supabase
+        const { error } = await sb
             .from('subscribers')
             .upsert({
                 user_id:                profile.user_id,
