@@ -698,9 +698,9 @@ def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
 
     Templates required in Termii dashboard:
       Personalised — template name: dracohub_weekly_digest
-        Variables: name, count, title1, company1, title2, company2, title3, company3, url_suffix
+        Variables: name, count, title1, company1, title2, company2, title3, company3, url
       Generic — template name: dracohub_weekly_general
-        Variables: count, companies, url_suffix
+        Variables: count, companies, url
     """
     if not TERMII_API_KEY or not TERMII_DEVICE_ID:
         logger.warning("Termii not configured — skipping WhatsApp for %s", phone)
@@ -711,8 +711,8 @@ def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
     if clean_phone.startswith("0"):
         clean_phone = "234" + clean_phone[1:]
 
-    # URL suffix for the digest CTA button
-    url_suffix = f"digest.html?id={digest_id}" if digest_id else ""
+    # Full URL for the digest CTA link
+    digest_url = f"{SITE_URL}digest.html?id={digest_id}" if digest_id else SITE_URL
 
     if is_personalised:
         if not TERMII_TEMPLATE_PERSONALISED:
@@ -733,7 +733,7 @@ def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
             "company2": top3[1].get("company", "—")[:30],
             "title3":   top3[2].get("job_title", "—")[:40],
             "company3": top3[2].get("company", "—")[:30],
-            "url_suffix": url_suffix,
+            "url":      digest_url,
         }
         template_id = TERMII_TEMPLATE_PERSONALISED
     else:
@@ -745,7 +745,7 @@ def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
         template_data = {
             "count":     str(len(jobs)),
             "companies": str(companies),
-            "url_suffix": url_suffix,
+            "url":       digest_url,
         }
         template_id = TERMII_TEMPLATE_GENERIC
 
