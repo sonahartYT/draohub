@@ -43,6 +43,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # bypasses RLS for ser
 RESEND_API_KEY       = os.getenv("RESEND_API_KEY")
 ANTHROPIC_API_KEY    = os.getenv("ANTHROPIC_API_KEY")
 TERMII_API_KEY       = os.getenv("TERMII_API_KEY")
+TERMII_SENDER_ID     = os.getenv("TERMII_SENDER_ID", "DracoHub")  # Registered sender ID in Termii
 TERMII_DEVICE_ID     = os.getenv("TERMII_DEVICE_ID")
 # Template IDs — create these in your Termii dashboard, then set as secrets
 TERMII_TEMPLATE_PERSONALISED = os.getenv("TERMII_TEMPLATE_PERSONALISED")
@@ -778,6 +779,79 @@ def send_via_whatsapp(phone: str, sub: dict, jobs: list[dict],
 
 
 # ---------------------------------------------------------------------------
+# Termii — SMS delivery (fallback when WhatsApp is unavailable)
+# ---------------------------------------------------------------------------
+
+def send_via_sms(phone: str, sub: dict, jobs: list[dict],
+                 digest_id: str | None, is_personalised: bool,
+                 dry_run: bool = False) -> bool:
+    """
+    Send a short digest summary via Termii SMS.
+    No templates or Meta approval required — works as soon as TERMII_API_KEY is set.
+    Uses the registered sender ID (TERMII_SENDER_ID, default 'DracoHub').
+    """
+    if not TERMII_API_KEY:
+        logger.warning("Termii not configured — skipping SMS for %s", phone)
+        return False
+
+    # Normalise phone: strip leading + or 0, ensure starts with country code
+    clean_phone = phone.strip().lstrip("+")
+    if clean_phone.startswith("0"):
+        clean_phone = "234" + clean_phone[1:]
+
+    digest_url = f"{SITE_URL}digest.html?id={digest_id}" if digest_id else SITE_URL
+    name = (sub.get("name") or "").split()[0] or "there"
+
+    if is_personalised:
+        # Pick top 3 jobs for the SMS preview
+        top3 = jobs[:3]
+        previews = "\n".join(
+            f"- {j.get('job_title','?')} @ {j.get('company','?')}"
+            for j in top3
+        )
+        message = (
+            f"Hi {name}, your DracoHub digest is ready!\n\n"
+            f"We matched {len(jobs)} O&G roles to your profile:\n"
+            f"{previews}\n\n"
+            f"See all: {digest_url}"
+        )
+    else:
+        companies = len({j.get("company") for j in jobs if j.get("company")})
+        message = (
+            f"DracoHub Weekly Digest\n\n"
+            f"{len(jobs)} O&G roles from {companies} companies across Nigeria this week.\n\n"
+            f"Browse now: {digest_url}"
+        )
+
+    if dry_run:
+        logger.info("[DRY RUN] SMS to %s: %s", clean_phone, message[:80] + "…")
+        return True
+
+    resp = requests.post(
+        "https://api.ng.termii.com/api/sms/send",
+        json={
+            "to":      clean_phone,
+            "from":    TERMII_SENDER_ID,
+            "sms":     message,
+            "type":    "plain",
+            "channel": "generic",
+            "api_key": TERMII_API_KEY,
+        },
+        timeout=30,
+    )
+
+    if resp.status_code in (200, 201):
+        result = resp.json()
+        if result.get("code") == "ok":
+            logger.info("✓ SMS sent to %s (balance: %s)", clean_phone, result.get("balance"))
+            return True
+        logger.error("Termii SMS rejected for %s: %s", clean_phone, result)
+    else:
+        logger.error("Termii SMS HTTP error for %s: %s %s", clean_phone, resp.status_code, resp.text[:200])
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Resend — email delivery
 # ---------------------------------------------------------------------------
 
@@ -869,10 +943,21 @@ def main():
         logger.warning("No paid subscribers found — nothing to send.")
         return
 
+    # Determine which mobile channel is active
+    whatsapp_enabled = bool(TERMII_API_KEY and TERMII_DEVICE_ID)
+    sms_enabled      = bool(TERMII_API_KEY and not whatsapp_enabled)
+    if whatsapp_enabled:
+        logger.info("Mobile channel: WhatsApp (Termii templates)")
+    elif sms_enabled:
+        logger.info("Mobile channel: SMS (WhatsApp device/templates not configured)")
+    else:
+        logger.info("Mobile channel: disabled (no TERMII_API_KEY)")
+
     # 5. Send to each subscriber
     sent_personalised = 0
     sent_generic      = 0
     sent_whatsapp     = 0
+    sent_sms          = 0
     failed            = 0
     week              = week_label()
 
@@ -915,15 +1000,23 @@ def main():
             else:
                 failed += 1
 
-            # ── WhatsApp (if number on file) ──
-            wa_number = sub.get("whatsapp_number")
-            if wa_number and digest_id:
-                wa_ok = send_via_whatsapp(
-                    wa_number, sub, digest_jobs, digest_id,
-                    is_personalised, dry_run=args.dry_run
-                )
-                if wa_ok:
-                    sent_whatsapp += 1
+            # ── Mobile notification (WhatsApp preferred, SMS fallback) ──
+            mobile_number = sub.get("whatsapp_number") or sub.get("phone")
+            if mobile_number and digest_id:
+                if whatsapp_enabled:
+                    wa_ok = send_via_whatsapp(
+                        mobile_number, sub, digest_jobs, digest_id,
+                        is_personalised, dry_run=args.dry_run
+                    )
+                    if wa_ok:
+                        sent_whatsapp += 1
+                elif sms_enabled:
+                    sms_ok = send_via_sms(
+                        mobile_number, sub, digest_jobs, digest_id,
+                        is_personalised, dry_run=args.dry_run
+                    )
+                    if sms_ok:
+                        sent_sms += 1
 
         except Exception as e:
             logger.error("Error processing %s: %s", email, e)
@@ -941,8 +1034,8 @@ def main():
                 failed += 1
 
     logger.info("=" * 60)
-    logger.info("Done. Personalised: %d | Generic: %d | WhatsApp: %d | Failed: %d",
-                sent_personalised, sent_generic, sent_whatsapp, failed)
+    logger.info("Done. Personalised: %d | Generic: %d | WhatsApp: %d | SMS: %d | Failed: %d",
+                sent_personalised, sent_generic, sent_whatsapp, sent_sms, failed)
     logger.info("=" * 60)
 
     if failed > 0:
