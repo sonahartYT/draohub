@@ -969,7 +969,9 @@
                 callback: async function(response) {
                     // DEBUG — remove after confirming status string
                     console.log('FLW response:', JSON.stringify(response));
-                    alert('FLW status: ' + response.status + ' | tx_ref: ' + response.tx_ref);
+                    var dbg = document.getElementById('flwDebug');
+                    if (!dbg) { dbg = document.createElement('div'); dbg.id = 'flwDebug'; dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ef4444;color:#fff;padding:16px;font-size:14px;font-weight:700;z-index:99999;'; document.body.appendChild(dbg); }
+                    dbg.textContent = 'FLW callback fired! status="' + response.status + '" tx_ref="' + response.tx_ref + '"';
                     if (response.status === 'successful' || response.status === 'completed') {
                         btn.textContent = 'Activating...';
                         btn.disabled = true;
