@@ -967,6 +967,9 @@
                     logo:        'https://dracohub.co/favicon.png',
                 },
                 callback: async function(response) {
+                    // DEBUG — remove after confirming status string
+                    console.log('FLW response:', JSON.stringify(response));
+                    alert('FLW status: ' + response.status + ' | tx_ref: ' + response.tx_ref);
                     if (response.status === 'successful' || response.status === 'completed') {
                         btn.textContent = 'Activating...';
                         btn.disabled = true;
