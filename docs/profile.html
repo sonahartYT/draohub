@@ -969,6 +969,7 @@
                 callback: async function(response) {
                     if (response.status === 'successful' || response.status === 'completed') {
                         btn.textContent = 'Activating...';
+                        btn.disabled = true;
                         try {
                             const expiresAt = new Date();
                             expiresAt.setDate(expiresAt.getDate() + 30);
@@ -985,18 +986,28 @@
                                 }, { onConflict: 'user_id', ignoreDuplicates: false });
 
                             if (!error) {
-                                document.getElementById('noSubBanner').style.display = 'none';
-                                document.getElementById('sidebarSubBadge').innerHTML =
-                                    renderSubBadge('paid', expiresAt.toISOString());
+                                // Reload the page so the profile re-reads from Supabase
+                                window.location.href = 'profile.html?welcome=1';
                             } else {
                                 console.error('Post-payment update error:', error.message);
+                                btn.disabled = false;
+                                btn.textContent = 'Subscribe — ₦3,000/mo';
+                                const errMsg = document.getElementById('profileErrorMsg');
+                                errMsg.textContent = 'Payment received but profile update failed: ' + error.message + '. Please contact support with your reference: ' + response.tx_ref;
+                                errMsg.style.display = 'block';
                             }
                         } catch(e) {
                             console.error('Post-payment update error:', e);
+                            btn.disabled = false;
+                            btn.textContent = 'Subscribe — ₦3,000/mo';
+                            const errMsg = document.getElementById('profileErrorMsg');
+                            errMsg.textContent = 'Payment received but activation failed. Please refresh and try again or contact support.';
+                            errMsg.style.display = 'block';
                         }
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = 'Subscribe — ₦3,000/mo';
                     }
-                    btn.disabled = false;
-                    btn.textContent = 'Subscribe — ₦3,000/mo';
                 },
                 onclose: function() {
                     btn.disabled = false;
