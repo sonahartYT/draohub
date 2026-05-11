@@ -752,8 +752,19 @@
 
                 // Subscription badge
                 const badgeEl = document.getElementById('sidebarSubBadge');
-                if (sub?.subscription_status === 'paid') {
+                const isPaid = sub?.subscription_status === 'paid';
+                if (isPaid) {
                     badgeEl.innerHTML = renderSubBadge('paid', sub.subscription_expires_at);
+                    // Hide subscribe banner and disable subscribe button for paid users
+                    document.getElementById('noSubBanner').style.display = 'none';
+                    const subBtn = document.getElementById('subscribeBtn');
+                    if (subBtn) {
+                        subBtn.disabled = true;
+                        subBtn.textContent = '✓ Subscribed';
+                        subBtn.style.background = '#16a34a';
+                        subBtn.style.cursor = 'default';
+                        subBtn.onclick = null;
+                    }
                 } else {
                     badgeEl.innerHTML = `<span class="profile-sub-badge unpaid">No subscription</span>`;
                     document.getElementById('noSubBanner').style.display = 'flex';

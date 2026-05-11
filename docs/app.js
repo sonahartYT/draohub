@@ -336,8 +336,11 @@ function initDisclaimer() {
 // STATS
 // ============================================================
 function updateStats() {
-    statJobs.textContent = allJobs.length;
-    const companies = new Set(allJobs.map(j => j.company).filter(Boolean));
+    // Active listings = jobs within 30 days (matches what the board shows by default)
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeJobs = allJobs.filter(j => new Date(j.created_at) >= thirtyDaysAgo);
+    statJobs.textContent = activeJobs.length;
+    const companies = new Set(activeJobs.map(j => j.company).filter(Boolean));
     statCompanies.textContent = companies.size;
 
     // New this week stat (hero)
