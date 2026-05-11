@@ -926,7 +926,7 @@ async function initSubscribeSection() {
         if (btnText) btnText.textContent = 'Create Account & Subscribe →';
         if (note)    note.textContent    = 'Free account required · takes 30 seconds · Secure payment via Flutterwave';
     } else {
-        // Logged in — show identity bar, restore button to payment label
+        // Logged in — check subscription status first
         const user     = session.user;
         const name     = user.user_metadata?.full_name || user.user_metadata?.name || '';
         const email    = user.email || '';
@@ -934,6 +934,45 @@ async function initSubscribeSection() {
             ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             : email[0].toUpperCase();
 
+        // Check if already a paid subscriber
+        let isPaid = false;
+        try {
+            const resp = await fetch(
+                `${SUPABASE_URL}/rest/v1/subscribers?user_id=eq.${user.id}&select=subscription_status,subscription_expires_at`,
+                { headers: supaHeaders }
+            );
+            const rows = await resp.json();
+            if (rows && rows.length > 0 && rows[0].subscription_status === 'paid') {
+                const expiry = rows[0].subscription_expires_at;
+                if (!expiry || new Date(expiry) > new Date()) isPaid = true;
+            }
+        } catch(e) { /* non-fatal — fall through to payment flow */ }
+
+        if (isPaid) {
+            // Already subscribed — hide the form, show success state
+            const formEl    = document.getElementById('alertForm');
+            const successEl = document.getElementById('alertSuccess');
+            if (formEl)    formEl.style.display    = 'none';
+            if (successEl) {
+                successEl.style.display = 'flex';
+                // Update message for returning subscriber
+                const msgP = successEl.querySelector('p');
+                if (msgP) msgP.innerHTML = 'Your weekly digest is active. <a href="profile.html" style="color:#ED880D;font-weight:700;">View your profile →</a>';
+                const strongEl = successEl.querySelector('strong');
+                if (strongEl) strongEl.textContent = "You're already subscribed!";
+            }
+            // Show identity bar so they know who they're logged in as
+            const avatarEl = document.getElementById('alertUserAvatar');
+            const nameEl   = document.getElementById('alertUserName');
+            const emailEl  = document.getElementById('alertUserEmail');
+            if (avatarEl) avatarEl.textContent = initials;
+            if (nameEl)   nameEl.textContent   = name || email;
+            if (emailEl)  emailEl.textContent  = name ? email : '';
+            userBarEl.style.display = 'flex';
+            return; // nothing else to do
+        }
+
+        // Not yet paid — show identity bar and payment button
         const avatarEl = document.getElementById('alertUserAvatar');
         const nameEl   = document.getElementById('alertUserName');
         const emailEl  = document.getElementById('alertUserEmail');
