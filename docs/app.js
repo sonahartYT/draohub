@@ -339,6 +339,24 @@ function updateStats() {
     statJobs.textContent = allJobs.length;
     const companies = new Set(allJobs.map(j => j.company).filter(Boolean));
     statCompanies.textContent = companies.size;
+
+    // New this week stat (hero)
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const thisWeek = allJobs.filter(j => new Date(j.created_at) >= weekAgo);
+    const newThisWeekEl = document.getElementById('statNewThisWeek');
+    if (newThisWeekEl) newThisWeekEl.textContent = thisWeek.length;
+
+    // Digest preview card stats
+    const digestNew = document.getElementById('digestPreviewNew');
+    const digestCo  = document.getElementById('digestPreviewCompanies');
+    const digestWk  = document.getElementById('digestPreviewWeek');
+    const weekCompanies = new Set(thisWeek.map(j => j.company).filter(Boolean));
+    if (digestNew) digestNew.textContent = thisWeek.length;
+    if (digestCo)  digestCo.textContent  = weekCompanies.size;
+    if (digestWk) {
+        const monday = new Date(); monday.setDate(monday.getDate() - monday.getDay() + 1);
+        digestWk.textContent = 'Week of ' + monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
 }
 
 // ============================================================
