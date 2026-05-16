@@ -124,7 +124,7 @@ def fetch_paid_subscribers() -> list[dict]:
                 "years_experience,background,open_to_relocation,willing_abroad,"
                 "employment_status,job_hunting_status,subscription_status,"
                 "nysc_status,sector_pref,company_type_pref,contract_type_pref,"
-                "notice_period,certifications,whatsapp_number"
+                "notice_period,certifications,whatsapp_number,phone"
             ),
             "subscription_status": "eq.paid",
         },
