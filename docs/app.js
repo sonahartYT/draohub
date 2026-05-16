@@ -992,10 +992,12 @@ async function initSubscribeSection() {
                 const sen = document.getElementById('alertSeniority');
                 const loc = document.getElementById('alertLocation');
                 const bg  = document.getElementById('alertBackground');
+                const ph  = document.getElementById('alertPhone');
                 if (cat && draft.category)   cat.value = draft.category;
                 if (sen && draft.seniority)  sen.value = draft.seniority;
                 if (loc && draft.location)   loc.value = draft.location;
                 if (bg  && draft.background) bg.value  = draft.background;
+                if (ph  && draft.phone)      ph.value  = draft.phone;
             } catch(e) {}
             localStorage.removeItem('dh_subscribe_draft');
 
@@ -1015,6 +1017,7 @@ function goLoginToSubscribe() {
         seniority:  document.getElementById('alertSeniority')?.value  || '',
         location:   document.getElementById('alertLocation')?.value   || '',
         background: document.getElementById('alertBackground')?.value || '',
+        phone:      document.getElementById('alertPhone')?.value.trim() || '',
     };
     localStorage.setItem('dh_subscribe_draft', JSON.stringify(draft));
     window.location.href = 'login.html?next=' + encodeURIComponent('index.html#subscribe');
@@ -1054,6 +1057,7 @@ async function startDigestPayment() {
     const seniority     = document.getElementById('alertSeniority').value;
     const location_pref = document.getElementById('alertLocation').value;
     const background    = document.getElementById('alertBackground').value;
+    const phone         = document.getElementById('alertPhone')?.value.trim() || '';
 
     const btn = document.getElementById('digestBtn');
     document.getElementById('digestBtnText').style.display    = 'none';
@@ -1069,7 +1073,7 @@ async function startDigestPayment() {
         currency:        'NGN',
         payment_options: 'card, banktransfer, ussd',
         customer: { email, name },
-        meta: { category, seniority, location_pref, background },
+        meta: { category, seniority, location_pref, background, phone },
         customizations: {
             title:       'DracoHub Weekly Digest',
             description: 'Monthly subscription — ₦3,000/month',
@@ -1078,7 +1082,7 @@ async function startDigestPayment() {
         callback: async function(response) {
             if (response.status === 'successful' || response.status === 'completed') {
                 await handleDigestSuccess(
-                    { email, name, user_id: user.id, category, seniority, location_pref, background },
+                    { email, name, user_id: user.id, category, seniority, location_pref, background, phone },
                     response.tx_ref,
                     response.transaction_id
                 );
@@ -1115,6 +1119,7 @@ async function handleDigestSuccess(profile, flw_ref, flw_tx_id) {
                 seniority:              profile.seniority   || null,
                 location_pref:          profile.location_pref || null,
                 background:             profile.background  || null,
+                whatsapp_number:        profile.phone       || null,
                 subscription_status:    'paid',
                 flw_ref:                flw_ref,
                 flw_tx_id:              String(flw_tx_id),
