@@ -1002,8 +1002,6 @@ def main():
 
             # ── Mobile notification (WhatsApp preferred, SMS fallback) ──
             mobile_number = sub.get("whatsapp_number") or sub.get("phone")
-            logger.info("Mobile check for %s — number: %s | digest_id: %s",
-                        email, mobile_number or "none", digest_id or "none")
             if mobile_number and digest_id:
                 if whatsapp_enabled:
                     wa_ok = send_via_whatsapp(
