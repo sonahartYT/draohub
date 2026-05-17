@@ -525,7 +525,7 @@ function renderJobs() {
                 ${job.tags.seniority && job.tags.seniority !== 'Mid-Level' ? `<span class="job-tag tag-seniority">${escapeHtml(job.tags.seniority)}</span>` : ''}
                 ${job.tags.employment_type && job.tags.employment_type !== 'Full-time' ? `<span class="job-tag tag-employment">${escapeHtml(job.tags.employment_type)}</span>` : ''}
             </div>` : ''}
-            <p class="job-card-desc">${escapeHtml(truncate(job.description, 160))}</p>
+            <p class="job-card-desc">${escapeHtml(job.description || '')}</p>
             <div class="job-card-actions">
                 <div style="display:flex;gap:6px;align-items:center;">
                     ${upvoteBtnHtml(job.id, job.upvotes)}
