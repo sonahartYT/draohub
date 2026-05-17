@@ -1,0 +1,43 @@
+name: Subscription Renewal Reminder
+
+on:
+  schedule:
+    # Every day at 8:00 AM UTC (9:00 AM WAT)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (log only, do not send)'
+        type: boolean
+        default: true
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send renewal reminders
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
+          DIGEST_FROM_EMAIL:    ${{ secrets.DIGEST_FROM_EMAIL }}
+          TERMII_API_KEY:       ${{ secrets.TERMII_API_KEY }}
+          TERMII_SENDER_ID:     ${{ secrets.TERMII_SENDER_ID }}
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAGS="--dry-run"; fi
+          python scripts/send_renewal_reminder.py $FLAGS
