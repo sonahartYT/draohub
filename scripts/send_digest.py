@@ -114,7 +114,8 @@ def service_headers() -> dict:
 
 
 def fetch_paid_subscribers() -> list[dict]:
-    """Fetch all paid subscribers with their profile data."""
+    """Fetch all active paid subscribers (not expired) with their profile data."""
+    today = datetime.now(timezone.utc).date().isoformat()
     resp = requests.get(
         f"{SUPABASE_URL}/rest/v1/subscribers",
         headers=service_headers(),
@@ -124,14 +125,18 @@ def fetch_paid_subscribers() -> list[dict]:
                 "years_experience,background,open_to_relocation,willing_abroad,"
                 "employment_status,job_hunting_status,subscription_status,"
                 "nysc_status,sector_pref,company_type_pref,contract_type_pref,"
-                "notice_period,certifications,whatsapp_number,phone"
+                "notice_period,certifications,whatsapp_number,phone,"
+                "subscription_expires_at"
             ),
             "subscription_status": "eq.paid",
+            # Only include subscribers whose subscription hasn't expired yet,
+            # or who have no expiry date set (legacy rows)
+            "or": f"(subscription_expires_at.gte.{today},subscription_expires_at.is.null)",
         },
         timeout=30,
     )
     subs = resp.json() if resp.status_code == 200 else []
-    logger.info("Found %d paid subscribers", len(subs))
+    logger.info("Found %d active paid subscribers", len(subs))
     return subs
 
 
