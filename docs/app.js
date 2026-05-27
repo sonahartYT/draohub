@@ -8,7 +8,7 @@
 // --- Configuration ---
 const SUPABASE_URL = 'https://ljhbyudaiuhviagiigwb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqaGJ5dWRhaXVodmlhZ2lpZ3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE4NTgsImV4cCI6MjA5MTE1Nzg1OH0.N6eQLAmrTqidXYZRej_Eqpy5G_ci6mLRZ64OW1XEHkE';
-const FLW_PUBLIC_KEY = 'FLWPUBK_TEST-0cb85e69f14033272d573902cfc31c9e-X';
+const FLW_PUBLIC_KEY = 'FLWPUBK-46eacd3bb99e6db0652248a5a390859f-X';
 
 const PAGE_SIZE = 12;
 const SITE_URL = window.location.origin + window.location.pathname;
